@@ -1,0 +1,11 @@
+{
+  "name": "hugport-lib",
+  "version": "0.0.1",
+  "main": "dist/index.js",
+  "repository": {
+    "url": "git@github.com:misak113/hugport-lib",
+    "type": "git"
+  },
+  "author": "Michael Zabka <zabka.michael@gmail.com>",
+  "license": "MIT"
+}
