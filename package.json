@@ -9,7 +9,8 @@
   "author": "Michael Zabka <zabka.michael@gmail.com>",
   "license": "MIT",
   "dependencies": {
-    "co": "^4.6.0"
+    "co": "^4.6.0",
+    "mocha-jenkins-reporter": "^0.2.6"
   },
   "peerDependencies": {
     "mocha": "^3.1.2"

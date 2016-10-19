@@ -35,6 +35,10 @@ debug@2.2.0:
   dependencies:
     ms "0.7.1"
 
+diff@1.0.7:
+  version "1.0.7"
+  resolved "https://registry.yarnpkg.com/diff/-/diff-1.0.7.tgz#24bbb001c4a7d5522169e7cabdb2c2814ed91cf4"
+
 diff@1.4.0:
   version "1.4.0"
   resolved "https://registry.yarnpkg.com/diff/-/diff-1.4.0.tgz#7f28d2eb9ee7b15a97efd89ce63dcfdaa3ccbabf"
@@ -148,7 +152,15 @@ mkdirp@0.5.1:
   dependencies:
     minimist "0.0.8"
 
-mocha:
+mocha-jenkins-reporter:
+  version "0.2.6"
+  resolved "https://registry.yarnpkg.com/mocha-jenkins-reporter/-/mocha-jenkins-reporter-0.2.6.tgz#fd66d8fc0ead486bff7bd515bbb6965eeb7e7a0a"
+  dependencies:
+    diff "1.0.7"
+    mkdirp "0.5.1"
+    mocha ">=2.0.0"
+
+mocha@>=2.0.0:
   version "3.1.2"
   resolved "https://registry.yarnpkg.com/mocha/-/mocha-3.1.2.tgz#51f93b432bf7e1b175ffc22883ccd0be32dba6b5"
   dependencies:
