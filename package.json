@@ -1,10 +1,19 @@
 {
   "name": "hugport-lib",
   "version": "0.0.5",
-  "main": "dist/index.js",
+  "main": "./libs",
+  "files": [
+    "libs",
+    "README.md",
+    "package.json"
+  ],
   "repository": {
     "url": "git@github.com:misak113/hugport-lib",
     "type": "git"
+  },
+  "scripts": {
+    "release": "yarn version --new-version patch && (npm publish ; git push origin master --tags)",
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "Michael Zabka <zabka.michael@gmail.com>",
   "license": "MIT",
@@ -14,5 +23,9 @@
   },
   "peerDependencies": {
     "mocha": "^3.1.2"
+  },
+  "publishConfig": {
+    "registry": "https://ci.hugport.com:4875",
+    "access": "public"
   }
 }
