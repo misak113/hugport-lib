@@ -4,6 +4,7 @@
   "main": "./libs",
   "files": [
     "libs",
+    "tools",
     "README.md",
     "package.json"
   ],
