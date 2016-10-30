@@ -10,6 +10,7 @@
         "pretty": true
     },
     "filesGlob": [
+        "typings/index.d.ts",
         "src/**/*.tsx?"
     ]
 }

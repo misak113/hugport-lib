@@ -16,7 +16,7 @@
   "scripts": {
     "build": "tsc",
     "lint": "tslint --format checkstyle --config node_modules/hugport-codestyle/tslint.json --out dist/tslint-report.xml {src,tests}/**/*.{ts,tsx}",
-    "prebuild": "rm -rf dist/*",
+    "prebuild": "rm -rf dist/* && rm -rf typings/* && typings install",
     "prepublish": "yarn run prebuild && yarn run build",
     "release": "yarn version --new-version patch && (npm publish ; git push origin master --tags)",
     "test": "echo \"Error: no test specified\" && exit 1",
@@ -29,6 +29,7 @@
     "mocha-jenkins-reporter": "^0.2.6"
   },
   "peerDependencies": {
+    "amqplib": "~0.4.2",
     "mocha": "^3.1.2"
   },
   "publishConfig": {
@@ -37,6 +38,7 @@
   },
   "devDependencies": {
     "hugport-codestyle": "^0.0.4",
-    "typescript": "^2.0.6"
+    "typescript": "^2.0.6",
+    "typings": "^1.5.0"
   }
 }
