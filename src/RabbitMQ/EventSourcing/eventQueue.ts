@@ -23,3 +23,16 @@ export function* fetchNext(this: Connection) {
 	const event = JSON.parse(message.content.toString());
 	return event;
 }
+
+export function* bind(this: Connection, onEvent: (event: IEvent, onProcessed: () => void) => void) {
+	const channel = yield this.createChannel();
+	yield channel.assertQueue(QUEUE_NAME);
+	yield channel.consume(QUEUE_NAME, (message: Message) => {
+		try {
+			const event = JSON.parse(message.content.toString());
+			onEvent(event, () => channel.ack(message));
+		} catch (error) {
+			console.error(error);
+		}
+	});
+}

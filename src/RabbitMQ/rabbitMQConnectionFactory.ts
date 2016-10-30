@@ -1,9 +1,10 @@
 
 import * as amqp from 'amqplib';
+const co = require('co');
 
 export interface IRabbitMQConnection {
 	connection: amqp.Connection;
-	connect: () => void;
+	connect: () => Promise<void>;
 	close: () => void;
 }
 
@@ -11,11 +12,10 @@ export function createRabbitMQConnection(rabbitMQDsn: string): IRabbitMQConnecti
 	const rabbitConnection: IRabbitMQConnection = {
 		connection: null,
 		connect: () => {
-			amqp.connect(rabbitMQDsn)
-				.then((connection: amqp.Connection) => rabbitConnection.connection = connection)
-				.catch((error: Error) => {
-					throw error;
-				});
+			return co(function* () {
+				const connection: amqp.Connection = yield amqp.connect(rabbitMQDsn);
+				rabbitConnection.connection = connection;
+			});
 		},
 		close: () => {
 			rabbitConnection.connection.close();
