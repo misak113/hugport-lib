@@ -1,0 +1,15 @@
+{
+    "compilerOptions": {
+        "module": "commonjs",
+        "outDir": "dist",
+        "sourceMap": true,
+        "target": "es6",
+        "declaration": true,
+        "experimentalDecorators": true,
+        "emitDecoratorMetadata": true,
+        "pretty": true
+    },
+    "filesGlob": [
+        "src/**/*.tsx?"
+    ]
+}

@@ -74,6 +74,10 @@ has-flag@^1.0.0:
   version "1.0.0"
   resolved "https://registry.yarnpkg.com/has-flag/-/has-flag-1.0.0.tgz#9d9e793165ce017a00f00418c43f942a7b1d11fa"
 
+hugport-codestyle@^0.0.4:
+  version "0.0.4"
+  resolved "https://ci.hugport.com:4875/hugport-codestyle/-/hugport-codestyle-0.0.4.tgz#b9fa8452f72eebef3357e279b6017f462e46d3cc"
+
 inflight@^1.0.4:
   version "1.0.6"
   resolved "https://registry.yarnpkg.com/inflight/-/inflight-1.0.6.tgz#49bd6331d7d02d0c09bc910a1075ba8165b56df9"
@@ -195,6 +199,10 @@ supports-color@3.1.2:
   resolved "https://registry.yarnpkg.com/supports-color/-/supports-color-3.1.2.tgz#72a262894d9d408b956ca05ff37b2ed8a6e2a2d5"
   dependencies:
     has-flag "^1.0.0"
+
+typescript@^2.0.6:
+  version "2.0.6"
+  resolved "https://ci.hugport.com:4875/typescript/-/typescript-2.0.6.tgz#5385499ac9811508c2c43e0ea07a1ddca435e111"
 
 wrappy@1:
   version "1.0.2"

@@ -1,8 +1,9 @@
 {
   "name": "hugport-lib",
-  "version": "0.0.7",
-  "main": "./libs",
+  "version": "1.0.0",
+  "main": "./dist",
   "files": [
+    "dist",
     "libs",
     "tools",
     "README.md",
@@ -13,8 +14,13 @@
     "type": "git"
   },
   "scripts": {
+    "build": "tsc",
+    "lint": "tslint --format checkstyle --config node_modules/hugport-codestyle/tslint.json --out dist/tslint-report.xml {src,tests}/**/*.{ts,tsx}",
+    "prebuild": "rm -rf dist/*",
+    "prepublish": "yarn run prebuild && yarn run build",
     "release": "yarn version --new-version patch && (npm publish ; git push origin master --tags)",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "watch": "tsc --watch"
   },
   "author": "Michael Zabka <zabka.michael@gmail.com>",
   "license": "MIT",
@@ -28,5 +34,9 @@
   "publishConfig": {
     "registry": "https://ci.hugport.com:4875",
     "access": "public"
+  },
+  "devDependencies": {
+    "hugport-codestyle": "^0.0.4",
+    "typescript": "^2.0.6"
   }
 }
