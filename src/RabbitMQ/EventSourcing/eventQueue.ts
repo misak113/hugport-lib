@@ -13,7 +13,7 @@ export function* enqueueList(this: any, events: IEvent[]) {
 export function* enqueue(this: Connection, event: IEvent) {
 	const channel = yield this.createChannel();
 	yield channel.assertQueue(QUEUE_NAME);
-	channel.sendToQueue(QUEUE_NAME, new Buffer(JSON.stringify(event)));
+	channel.sendToQueue(QUEUE_NAME, new Buffer(JSON.stringify(event)), { parsistent: true });
 }
 
 export function* fetchNext(this: Connection) {
