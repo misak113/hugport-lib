@@ -2,7 +2,7 @@
 import { Connection, Message } from 'amqplib';
 import IEvent from './IEvent';
 
-const QUEUE_NAME = 'events';
+const QUEUE_NAME_PREFIX = 'events.';
 
 export function* enqueueList(this: any, events: IEvent[]) {
 	for (let event of events) {
@@ -11,23 +11,30 @@ export function* enqueueList(this: any, events: IEvent[]) {
 }
 
 export function* enqueue(this: Connection, event: IEvent) {
+	const queueName = QUEUE_NAME_PREFIX + event.type;
 	const channel = yield this.createChannel();
-	yield channel.assertQueue(QUEUE_NAME);
-	channel.sendToQueue(QUEUE_NAME, new Buffer(JSON.stringify(event)), { parsistent: true });
+	yield channel.assertQueue(queueName);
+	channel.sendToQueue(queueName, new Buffer(JSON.stringify(event)), { parsistent: true });
 }
 
-export function* fetchNext(this: Connection) {
+export function* fetchNext(this: Connection, eventType: string) {
+	const queueName = QUEUE_NAME_PREFIX + eventType;
 	const channel = yield this.createChannel();
-	yield channel.assertQueue(QUEUE_NAME);
-	const message: Message = yield channel.get(QUEUE_NAME, { noAck: true });
+	yield channel.assertQueue(queueName);
+	const message: Message = yield channel.get(queueName, { noAck: true });
 	const event = JSON.parse(message.content.toString());
 	return event;
 }
 
-export function* bind(this: Connection, onEvent: (event: IEvent, onProcessed: () => void) => void) {
+export function* bindMore(this: Connection, eventTypes: string[], onEvent: (event: IEvent, onProcessed: () => void) => void) {
+	yield eventTypes.map((eventType: string) => bindOne.call(this, eventType, onEvent));
+}
+
+export function* bindOne(this: Connection, eventType: string, onEvent: (event: IEvent, onProcessed: () => void) => void) {
+	const queueName = QUEUE_NAME_PREFIX + eventType;
 	const channel = yield this.createChannel();
-	yield channel.assertQueue(QUEUE_NAME);
-	yield channel.consume(QUEUE_NAME, (message: Message) => {
+	yield channel.assertQueue(queueName);
+	yield channel.consume(queueName, (message: Message) => {
 		try {
 			const event = JSON.parse(message.content.toString());
 			onEvent(event, () => channel.ack(message));
