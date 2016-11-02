@@ -3,6 +3,8 @@
     "amqplib": "registry:npm/amqplib#0.4.1+20160726143451"
   },
   "globalDevDependencies": {
-    "node": "registry:dt/node#6.0.0+20161019125345"
+    "node": "registry:dt/node#6.0.0+20161019125345",
+    "pg-promise": "github:vitaly-t/pg-promise",
+    "spex": "github:vitaly-t/spex"
   }
 }
