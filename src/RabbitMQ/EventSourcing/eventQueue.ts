@@ -22,8 +22,7 @@ export function* fetchNext(this: Connection, eventType: string) {
 	const channel = yield this.createChannel();
 	yield channel.assertQueue(queueName);
 	const message: Message = yield channel.get(queueName, { noAck: true });
-	const event = JSON.parse(message.content.toString());
-	return event;
+	return message.content ? JSON.parse(message.content.toString()) : null;
 }
 
 export function* bindMore(this: Connection, eventTypes: string[], onEvent: (event: IEvent, onProcessed: () => void) => void) {
