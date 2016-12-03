@@ -34,7 +34,7 @@
     "pg-promise": "^5.3.3"
   },
   "publishConfig": {
-    "registry": "https://ci.hugport.com:4875",
+    "registry": "https://npm.hugport.com",
     "access": "public"
   },
   "devDependencies": {
