@@ -28,7 +28,7 @@
     "co": "^4.6.0",
     "mocha-jenkins-reporter": "^0.2.6"
   },
-  "peerDependencies": {
+  "optionalPeerDependencies": {
     "amqplib": "~0.4.2",
     "mocha": "^3.1.2",
     "pg-promise": "^5.3.3"
