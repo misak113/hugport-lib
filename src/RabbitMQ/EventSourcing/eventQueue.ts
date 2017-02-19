@@ -4,34 +4,34 @@ import IEvent from './IEvent';
 
 const QUEUE_NAME_PREFIX = 'events.';
 
-export function* enqueueList(this: any, events: IEvent[]) {
+export function* enqueueList(conn: Connection, events: IEvent[]) {
 	for (let event of events) {
-		yield enqueue.call(this, event);
+		yield enqueue(conn, event);
 	}
 }
 
-export function* enqueue(this: Connection, event: IEvent) {
+export function* enqueue(conn: Connection, event: IEvent) {
 	const queueName = QUEUE_NAME_PREFIX + event.type;
-	const channel = yield this.createChannel();
+	const channel = yield conn.createChannel();
 	yield channel.assertQueue(queueName);
 	channel.sendToQueue(queueName, new Buffer(JSON.stringify(event)), { parsistent: true });
 }
 
-export function* fetchNext(this: Connection, eventType: string) {
+export function* fetchNext(conn: Connection, eventType: string) {
 	const queueName = QUEUE_NAME_PREFIX + eventType;
-	const channel = yield this.createChannel();
+	const channel = yield conn.createChannel();
 	yield channel.assertQueue(queueName);
 	const message: Message = yield channel.get(queueName, { noAck: true });
 	return message.content ? JSON.parse(message.content.toString()) : null;
 }
 
-export function* bindMore(this: Connection, eventTypes: string[], onEvent: (event: IEvent, onProcessed: () => void) => void) {
-	yield eventTypes.map((eventType: string) => bindOne.call(this, eventType, onEvent));
+export function* bindMore(conn: Connection, eventTypes: string[], onEvent: (event: IEvent, onProcessed: () => void) => void) {
+	yield eventTypes.map((eventType: string) => bindOne(conn, eventType, onEvent));
 }
 
-export function* bindOne(this: Connection, eventType: string, onEvent: (event: IEvent, onProcessed: () => void) => void) {
+export function* bindOne(conn: Connection, eventType: string, onEvent: (event: IEvent, onProcessed: () => void) => void) {
 	const queueName = QUEUE_NAME_PREFIX + eventType;
-	const channel = yield this.createChannel();
+	const channel = yield conn.createChannel();
 	yield channel.assertQueue(queueName);
 	yield channel.consume(queueName, (message: Message) => {
 		try {
