@@ -1,6 +1,7 @@
 {
   "devDependencies": {
-    "amqplib": "registry:npm/amqplib#0.4.1+20160726143451"
+    "amqplib": "registry:npm/amqplib#0.4.1+20160726143451",
+    "rethinkdb": "registry:npm/rethinkdb#2.3.0+20161207221332"
   },
   "globalDevDependencies": {
     "node": "registry:dt/node#6.0.0+20161019125345",
