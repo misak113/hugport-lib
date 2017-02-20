@@ -1,6 +1,6 @@
 
 interface IEvent {
-	id: string;
+	id: string | null;
 	commandId: string;
 	type: string;
 	sourceUid: string;
