@@ -14,7 +14,7 @@
     "type": "git"
   },
   "scripts": {
-    "build": "tsc",
+    "build": "tsc && cp typings/modules/amqp10/index.d.ts dist/AMQP/amqp.d.ts",
     "lint": "tslint --format checkstyle --config node_modules/hugport-codestyle/tslint.json --out dist/tslint-report.xml {src,tests}/**/*.{ts,tsx}",
     "prebuild": "rm -rf dist/* && rm -rf typings/* && typings install",
     "prepublish": "yarn run prebuild && yarn run build",
