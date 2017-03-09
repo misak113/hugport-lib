@@ -1,6 +1,6 @@
 {
   "name": "hugport-lib",
-  "version": "1.0.19",
+  "version": "1.0.20",
   "main": "./dist",
   "files": [
     "dist",
