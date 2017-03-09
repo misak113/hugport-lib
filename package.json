@@ -25,6 +25,7 @@
   "author": "Michael Zabka <zabka.michael@gmail.com>",
   "license": "MIT",
   "dependencies": {
+    "amqp10-link-cache": "^1.2.2",
     "co": "^4.6.0",
     "mocha-jenkins-reporter": "^0.2.6"
   },
