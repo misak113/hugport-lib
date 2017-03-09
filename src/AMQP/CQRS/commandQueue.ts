@@ -8,6 +8,7 @@ export async function enqueue(client: Client, command: ICommand) {
 	const queueName = QUEUE_NAME;
 	const sender = await client.createSender(queueName);
 	await sender.send(command);
+	await sender.detach();
 }
 
 export async function bindAll(client: Client, onCommand: (command: ICommand) => Promise<void>) {

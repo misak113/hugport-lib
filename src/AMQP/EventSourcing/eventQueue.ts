@@ -14,6 +14,7 @@ export async function enqueue(client: Client, event: IEvent) {
 	const queueName = QUEUE_NAME_PREFIX + event.type;
 	const sender = await client.createSender(queueName);
 	await sender.send(event);
+	await sender.detach();
 }
 
 export async function fetchNext(client: Client, eventType: string) {
