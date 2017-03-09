@@ -13,7 +13,7 @@ export async function enqueue(client: Client, event: IEvent) {
 	const queueName = QUEUE_NAME_PREFIX + event.type;
 	const sender = await client.createSender(queueName);
 	const state = await sender.send(event);
-	await sender.detach();
+	await sender.detach({ closed: true });
 	if (state instanceof Rejected) {
 		throw new Error(state.inspect());
 	}

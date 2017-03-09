@@ -9,7 +9,7 @@ export async function enqueue(client: Client, command: ICommand) {
 	const queueName = QUEUE_NAME;
 	const sender = await client.createSender(queueName);
 	const state = await sender.send(command);
-	await sender.detach();
+	await sender.detach({ closed: true });
 	if (state instanceof Rejected) {
 		throw new Error(state.inspect());
 	}
