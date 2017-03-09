@@ -1,8 +1,5 @@
-/// <reference path="../../libs/amqp10-link-cache/amqp10-link-cache.d.ts" />
 
 import * as amqp from 'amqp10';
-import * as linkCache from 'amqp10-link-cache';
-amqp.use(linkCache({ ttl: 5000 }));
 
 export interface IAMQPConnection {
 	client: amqp.Client;
