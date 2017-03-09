@@ -1,20 +1,22 @@
 
 import { Client, Message } from 'amqp10';
+import { Rejected } from 'amqp10/lib/types/delivery_state';
 import IEvent from './IEvent';
 
 const QUEUE_NAME_PREFIX = 'events.';
 
 export async function enqueueList(client: Client, events: IEvent[]) {
-	for (let event of events) {
-		await enqueue(client, event);
-	}
+	await events.map((event: IEvent) => enqueue(client, event));
 }
 
 export async function enqueue(client: Client, event: IEvent) {
 	const queueName = QUEUE_NAME_PREFIX + event.type;
 	const sender = await client.createSender(queueName);
-	await sender.send(event);
+	const state = await sender.send(event);
 	await sender.detach();
+	if (state instanceof Rejected) {
+		throw new Error(state.inspect());
+	}
 }
 
 export async function fetchNext(client: Client, eventType: string) {
