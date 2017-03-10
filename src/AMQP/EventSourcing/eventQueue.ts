@@ -5,10 +5,6 @@ import IEvent from './IEvent';
 
 const QUEUE_NAME_PREFIX = 'events.';
 
-export async function enqueueList(client: Client, events: IEvent[]) {
-	await events.map((event: IEvent) => enqueue(client, event));
-}
-
 export async function enqueue(client: Client, event: IEvent) {
 	const queueName = QUEUE_NAME_PREFIX + event.type;
 	const sender = await client.createSender(queueName);
