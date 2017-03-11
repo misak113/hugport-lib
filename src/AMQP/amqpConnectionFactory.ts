@@ -1,14 +1,16 @@
 
-import * as amqp from 'amqp10';
+import { Client, Policy } from 'amqp10';
 
 export interface IAMQPConnection {
-	client: amqp.Client;
+	client: Client;
 	connect: () => Promise<void>;
 	close: () => Promise<void>;
 }
 
 export function createAmqpConnection(dsn: string): IAMQPConnection {
-	const client: amqp.Client = new amqp.Client();
+	const client = new Client(
+		Policy.Utils.RenewOnSettle(1, 1, Policy.ServiceBusQueue)
+	);
 	client.on('error', (error: Error) => console.error(error));
 	const amqpConnection: IAMQPConnection = {
 		client,
