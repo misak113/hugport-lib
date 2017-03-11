@@ -1,5 +1,5 @@
 
-import { Client, Policy } from 'amqp10';
+import { Client, Policy, Constants } from 'amqp10';
 
 export interface IAMQPConnection {
 	client: Client;
@@ -8,9 +8,13 @@ export interface IAMQPConnection {
 }
 
 export function createAmqpConnection(dsn: string): IAMQPConnection {
-	const client = new Client(
-		Policy.Utils.RenewOnSettle(1, 1, Policy.ServiceBusQueue)
-	);
+	const client = new Client({
+		receiverLink: {
+			attach: {
+				receiverSettleMode: Constants.receiverSettleMode.settleOnDisposition,
+			},
+		},
+	});
 	client.on('error', (error: Error) => console.error(error));
 	const amqpConnection: IAMQPConnection = {
 		client,
