@@ -1,5 +1,5 @@
 
-import { Client, Policy, Constants } from 'amqp10';
+import { Client, Constants } from 'amqp10';
 
 export interface IAMQPConnection {
 	client: Client;
