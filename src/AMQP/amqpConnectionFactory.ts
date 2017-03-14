@@ -1,5 +1,6 @@
 
 import { Client, Constants } from 'amqp10';
+import { ReceiverLinkAttach } from './Policy';
 
 export interface IAMQPConnection {
 	client: Client;
@@ -12,7 +13,8 @@ export function createAmqpConnection(dsn: string): IAMQPConnection {
 		receiverLink: {
 			attach: {
 				receiverSettleMode: Constants.receiverSettleMode.settleOnDisposition,
-			},
+				manually: true
+			} as ReceiverLinkAttach,
 		},
 	});
 	client.on('error', (error: Error) => console.error(error));

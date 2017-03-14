@@ -28,6 +28,7 @@ export async function fetchNext(client: Client, eventType: string) {
 			receiver.removeAllListeners();
 			console.error(error);
 		});
+		receiver.attach();
 	});
 }
 
@@ -39,16 +40,17 @@ export async function bindMore(client: Client, eventTypes: string[], onEvent: (e
 
 export async function bindOne(client: Client, eventType: string, onEvent: (event: IEvent) => Promise<void>) {
 	const queueName = QUEUE_NAME_PREFIX + eventType;
-	const reciever = await client.createReceiver(queueName);
-	reciever.on('message', async (message: Message) => {
+	const receiver = await client.createReceiver(queueName);
+	receiver.on('message', async (message: Message) => {
 		try {
 			const event = message.body;
 			await onEvent(event);
-			reciever.accept(message);
+			receiver.accept(message);
 		} catch (error) {
 			console.error(error);
-			reciever.reject(message);
+			receiver.reject(message);
 		}
 	});
-	reciever.on('errorReceived', (error: Error) => console.error(error));
+	receiver.on('errorReceived', (error: Error) => console.error(error));
+	receiver.attach();
 }

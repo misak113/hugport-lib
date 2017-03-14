@@ -17,16 +17,17 @@ export async function enqueue(client: Client, command: ICommand) {
 
 export async function bindAll(client: Client, onCommand: (command: ICommand) => Promise<void>) {
 	const queueName = QUEUE_NAME;
-	const reciever = await client.createReceiver(queueName);
-	reciever.on('message', async (message: Message) => {
+	const receiver = await client.createReceiver(queueName);
+	receiver.on('message', async (message: Message) => {
 		try {
 			const command = message.body;
 			await onCommand(command);
-			reciever.accept(message);
+			receiver.accept(message);
 		} catch (error) {
 			console.error(error);
-			reciever.reject(message);
+			receiver.reject(message);
 		}
 	});
-	reciever.on('errorReceived', (error: Error) => console.error(error));
+	receiver.on('errorReceived', (error: Error) => console.error(error));
+	receiver.attach();
 }

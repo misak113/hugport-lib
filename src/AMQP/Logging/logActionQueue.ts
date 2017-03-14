@@ -17,16 +17,17 @@ export async function enqueue(client: Client, actionLog: IActionLog) {
 
 export async function bindAll(client: Client, onActionLog: (actionLog: IActionLog) => Promise<void>) {
 	const queueName = QUEUE_NAME;
-	const reciever = await client.createReceiver(queueName);
-	reciever.on('message', async (message: Message) => {
+	const receiver = await client.createReceiver(queueName);
+	receiver.on('message', async (message: Message) => {
 		try {
 			const actionLog = message.body;
 			await onActionLog(actionLog);
-			reciever.accept(message);
+			receiver.accept(message);
 		} catch (error) {
 			console.error(error);
-			reciever.reject(message);
+			receiver.reject(message);
 		}
 	});
-	reciever.on('errorReceived', (error: Error) => console.error(error));
+	receiver.on('errorReceived', (error: Error) => console.error(error));
+	receiver.attach();
 }
