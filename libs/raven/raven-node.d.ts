@@ -1,4 +1,5 @@
 
 declare module 'raven' {
-  export = Raven;
+	import * as Raven from 'raven-js';
+	export = Raven;
 }
