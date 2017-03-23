@@ -1,11 +1,11 @@
 
 import { Client, Message } from 'amqp10';
 import { Rejected } from 'amqp10/lib/types/delivery_state';
-import IEvent from './IEvent';
+import IEvent, { IEventPayload } from './IEvent';
 
 const QUEUE_NAME_PREFIX = 'events.';
 
-export async function enqueue(client: Client, event: IEvent) {
+export async function enqueue(client: Client, event: IEvent<IEventPayload>) {
 	const queueName = QUEUE_NAME_PREFIX + event.type;
 	const sender = await client.createSender(queueName);
 	const state = await sender.send(event);
@@ -15,10 +15,10 @@ export async function enqueue(client: Client, event: IEvent) {
 	}
 }
 
-export async function fetchNext(client: Client, eventType: string) {
+export async function fetchNext<TPayload extends IEventPayload>(client: Client, eventType: string) {
 	const queueName = QUEUE_NAME_PREFIX + eventType;
 	const receiver = await client.createReceiver(queueName);
-	return await new Promise<IEvent>((resolve: (data: IEvent) => void) => {
+	return await new Promise<IEvent<IEventPayload>>((resolve: (data: IEvent<TPayload>) => void) => {
 		receiver.once('message', (message: Message) => {
 			receiver.removeAllListeners();
 			receiver.accept(message);
@@ -32,13 +32,19 @@ export async function fetchNext(client: Client, eventType: string) {
 	});
 }
 
-export async function bindMore(client: Client, eventTypes: string[], onEvent: (event: IEvent) => Promise<void>) {
+export async function bindMore<TPayload extends IEventPayload>(
+	client: Client, eventTypes: string[],
+	onEvent: (event: IEvent<TPayload>) => Promise<void>
+) {
 	for (let eventType of eventTypes) {
 		await bindOne(client, eventType, onEvent);
 	}
 }
 
-export async function bindOne(client: Client, eventType: string, onEvent: (event: IEvent) => Promise<void>) {
+export async function bindOne<TPayload extends IEventPayload>(
+	client: Client, eventType: string,
+	onEvent: (event: IEvent<TPayload>) => Promise<void>
+) {
 	const queueName = QUEUE_NAME_PREFIX + eventType;
 	const receiver = await client.createReceiver(queueName);
 	receiver.on('message', async (message: Message) => {
