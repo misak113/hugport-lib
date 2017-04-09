@@ -356,9 +356,9 @@ https-proxy-agent@^1.0.0:
     debug "2"
     extend "3"
 
-hugport-codestyle@^0.0.4:
-  version "0.0.4"
-  resolved "https://npm.hugport.com/hugport-codestyle/-/hugport-codestyle-0.0.4.tgz#b9fa8452f72eebef3357e279b6017f462e46d3cc"
+hugport-codestyle@^0.0.8:
+  version "0.0.8"
+  resolved "https://npm.hugport.com/hugport-codestyle/-/hugport-codestyle-0.0.8.tgz#ade89ff57735013366130b857078acd350f7c4f0"
 
 imurmurhash@^0.1.4:
   version "0.1.4"
