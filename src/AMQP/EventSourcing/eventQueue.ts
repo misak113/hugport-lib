@@ -6,7 +6,7 @@ const QUEUE_NAME_PREFIX = 'events.';
 
 export async function enqueue(connection: Connection, event: IEvent<IEventPayload>) {
 	const queueName = QUEUE_NAME_PREFIX + event.type;
-	const channel = await connection.createChannel();
+	const channel = await connection.createConfirmChannel();
 	await assertQueue(channel, queueName);
 	channel.sendToQueue(
 		queueName,
@@ -17,7 +17,7 @@ export async function enqueue(connection: Connection, event: IEvent<IEventPayloa
 
 export async function fetchNext<TPayload extends IEventPayload>(connection: Connection, eventType: string): Promise<IEvent<TPayload> | null> {
 	const queueName = QUEUE_NAME_PREFIX + eventType;
-	const channel = await connection.createChannel();
+	const channel = await connection.createConfirmChannel();
 	await assertQueue(channel, queueName);
 	const message: Message | boolean = await channel.get(queueName, { noAck: true });
 	if (message && typeof message !== 'boolean') {
@@ -43,7 +43,7 @@ export async function bindOne<TPayload extends IEventPayload>(
 	onEvent: (event: IEvent<TPayload>) => Promise<void>
 ) {
 	const queueName = QUEUE_NAME_PREFIX + eventType;
-	const channel = await connection.createChannel();
+	const channel = await connection.createConfirmChannel();
 	await assertQueue(channel, queueName);
 	await channel.consume(queueName, async (message: Message) => {
 		try {

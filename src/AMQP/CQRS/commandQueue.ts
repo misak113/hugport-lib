@@ -6,7 +6,7 @@ const QUEUE_NAME = 'commands';
 
 export async function enqueue(connection: Connection, command: ICommand) {
 	const queueName = QUEUE_NAME;
-	const channel = await connection.createChannel();
+	const channel = await connection.createConfirmChannel();
 	await assertQueue(channel, queueName);
 	channel.sendToQueue(
 		queueName,
@@ -17,7 +17,7 @@ export async function enqueue(connection: Connection, command: ICommand) {
 
 export async function bindAll(connection: Connection, onCommand: (command: ICommand) => Promise<void>) {
 	const queueName = QUEUE_NAME;
-	const channel = await connection.createChannel();
+	const channel = await connection.createConfirmChannel();
 	await assertQueue(channel, queueName);
 	await channel.consume(queueName, async (message: Message) => {
 		try {
