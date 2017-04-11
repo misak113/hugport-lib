@@ -1,5 +1,5 @@
 
-import { Connection, Message } from 'amqplib';
+import { Connection, Message, Channel } from 'amqplib';
 import ICommand from './ICommand';
 
 const QUEUE_NAME = 'commands';
@@ -7,7 +7,7 @@ const QUEUE_NAME = 'commands';
 export async function enqueue(connection: Connection, command: ICommand) {
 	const queueName = QUEUE_NAME;
 	const channel = await connection.createChannel();
-	await channel.assertQueue(queueName);
+	await assertQueue(channel, queueName);
 	channel.sendToQueue(
 		queueName,
 		new Buffer(JSON.stringify(command)),
@@ -18,7 +18,7 @@ export async function enqueue(connection: Connection, command: ICommand) {
 export async function bindAll(connection: Connection, onCommand: (command: ICommand) => Promise<void>) {
 	const queueName = QUEUE_NAME;
 	const channel = await connection.createChannel();
-	await channel.assertQueue(queueName);
+	await assertQueue(channel, queueName);
 	await channel.consume(queueName, async (message: Message) => {
 		try {
 			const command = JSON.parse(message.content.toString());
@@ -28,5 +28,11 @@ export async function bindAll(connection: Connection, onCommand: (command: IComm
 			console.error(error);
 			channel.nack(message);
 		}
+	});
+}
+
+async function assertQueue(channel: Channel, queueName: string) {
+	await channel.assertQueue(queueName, {
+		deadLetterExchange: 'rejected'
 	});
 }
