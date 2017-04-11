@@ -1,30 +1,22 @@
 
-import { Client, Constants } from 'amqp10';
-import { ReceiverLinkAttach } from './Policy';
+import * as amqp from 'amqplib';
 
 export interface IAMQPConnection {
-	client: Client;
+	client: amqp.Connection;
 	connect: () => Promise<void>;
 	close: () => Promise<void>;
 }
 
 export function createAmqpConnection(dsn: string): IAMQPConnection {
-	const client = new Client({
-		receiverLink: {
-			attach: {
-				receiverSettleMode: Constants.receiverSettleMode.settleOnDisposition,
-				manually: true
-			} as ReceiverLinkAttach,
-		},
-	});
-	client.on('error', (error: Error) => console.error(error));
 	const amqpConnection: IAMQPConnection = {
-		client,
+		client: null as any,
 		connect: async function () {
-			await client.connect(dsn);
+			const client: amqp.Connection = await amqp.connect(dsn);
+			client.on('error', (error: Error) => console.error(error));
+			amqpConnection.client = client;
 		},
 		close: async function () {
-			await client.disconnect();
+			await amqpConnection.client.close();
 		},
 	};
 	return amqpConnection;

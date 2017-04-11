@@ -1,62 +1,58 @@
 
-import { Client, Message } from 'amqp10';
-import { Rejected } from 'amqp10/lib/types/delivery_state';
+import { Connection, Message } from 'amqplib';
 import IEvent, { IEventPayload } from './IEvent';
 
 const QUEUE_NAME_PREFIX = 'events.';
 
-export async function enqueue(client: Client, event: IEvent<IEventPayload>) {
+export async function enqueue(connection: Connection, event: IEvent<IEventPayload>) {
 	const queueName = QUEUE_NAME_PREFIX + event.type;
-	const sender = await client.createSender(queueName);
-	const state = await sender.send(event);
-	await sender.detach({ closed: false });
-	if (state instanceof Rejected) {
-		throw new Error(state.inspect());
+	const channel = await connection.createChannel();
+	await channel.assertQueue(queueName);
+	channel.sendToQueue(
+		queueName,
+		new Buffer(JSON.stringify(event)),
+		{ persistent: true },
+	);
+}
+
+export async function fetchNext<TPayload extends IEventPayload>(connection: Connection, eventType: string): Promise<IEvent<TPayload> | null> {
+	const queueName = QUEUE_NAME_PREFIX + eventType;
+	const channel = await connection.createChannel();
+	await channel.assertQueue(queueName);
+	const message: Message | boolean = await channel.get(queueName, { noAck: true });
+	if (message && typeof message !== 'boolean') {
+		return message.content ? JSON.parse(message.content.toString()) : null;
+	} else {
+		return null;
 	}
 }
 
-export async function fetchNext<TPayload extends IEventPayload>(client: Client, eventType: string) {
-	const queueName = QUEUE_NAME_PREFIX + eventType;
-	const receiver = await client.createReceiver(queueName);
-	return await new Promise<IEvent<IEventPayload>>((resolve: (data: IEvent<TPayload>) => void) => {
-		receiver.once('message', (message: Message) => {
-			receiver.removeAllListeners();
-			receiver.accept(message);
-			resolve(message.body);
-		});
-		receiver.once('errorReceived', (error: Error) => {
-			receiver.removeAllListeners();
-			console.error(error);
-		});
-		receiver.attach();
-	});
-}
-
 export async function bindMore<TPayload extends IEventPayload>(
-	client: Client, eventTypes: string[],
+	connection: Connection,
+	eventTypes: string[],
 	onEvent: (event: IEvent<TPayload>) => Promise<void>
 ) {
 	for (let eventType of eventTypes) {
-		await bindOne(client, eventType, onEvent);
+		await bindOne(connection, eventType, onEvent);
 	}
 }
 
 export async function bindOne<TPayload extends IEventPayload>(
-	client: Client, eventType: string,
+	connection: Connection,
+	eventType: string,
 	onEvent: (event: IEvent<TPayload>) => Promise<void>
 ) {
 	const queueName = QUEUE_NAME_PREFIX + eventType;
-	const receiver = await client.createReceiver(queueName);
-	receiver.on('message', async (message: Message) => {
+	const channel = await connection.createChannel();
+	await channel.assertQueue(queueName);
+	await channel.consume(queueName, async (message: Message) => {
 		try {
-			const event = message.body;
+			const event = JSON.parse(message.content.toString());
 			await onEvent(event);
-			receiver.accept(message);
+			channel.ack(message);
 		} catch (error) {
 			console.error(error);
-			receiver.reject(message);
+			channel.nack(message);
 		}
 	});
-	receiver.on('errorReceived', (error: Error) => console.error(error));
-	receiver.attach();
 }
