@@ -3,12 +3,8 @@ import * as amqp from 'amqplib';
 import wait from '../Timer/wait';
 const genericPool = require('generic-pool');
 
-export interface IDestroyable {
-	_destroying: boolean;
-}
-
 export interface IAMQPPool {
-	acquire(priority?: number): Promise<amqp.Connection & IDestroyable>;
+	acquire(priority?: number): Promise<amqp.Connection>;
 	release(connection: amqp.Connection): Promise<void>;
 	destroy(connection: amqp.Connection): Promise<void>;
 }
@@ -24,30 +20,21 @@ export function createAmqpConnection(dsn: string): IAMQPConnection {
 	const factory = {
 		async create(): Promise<amqp.Connection> {
 			try {
-				const connection = await amqp.connect(dsn) as amqp.Connection & IDestroyable;
+				const connection = await amqp.connect(dsn) as amqp.Connection;
 				connection.on('error', (error: Error) => {
-					if (!connection._destroying) {
-						/* tslint:disable-next-line */
-						pool.destroy(connection);
-					}
-					throw error;
+					console.error('AMQP error connection', error);
 				});
 				connection.on('close', () => {
 					console.info('AMQP closed connection');
-					if (!connection._destroying) {
-						/* tslint:disable-next-line */
-						pool.destroy(connection);
-					}
 				});
 				return connection;
 			} catch (error) {
 				console.log(`Connect AMQP failed. Retry after ${retryConnectTimeout} ms`);
 				await wait(retryConnectTimeout);
-				return factory.create();
+				return await factory.create();
 			}
 		},
 		async destroy(connection: amqp.Connection) {
-			(connection as any as IDestroyable)._destroying = true;
 			await connection.close();
 		},
 	};

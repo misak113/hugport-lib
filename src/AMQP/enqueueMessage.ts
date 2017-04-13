@@ -35,22 +35,18 @@ export async function enqueueMessage<TMessage>(
 	} = {},
 ) {
 	const connection = await amqpConnection.pool.acquire(options.priority);
-	const channel = await connection.createConfirmChannel();
-	await assertRejectableQueue(channel, queueName);
-	await new Promise((resolve: () => void, reject: (error: Error) => void) => channel.sendToQueue(
-		queueName,
-		new Buffer(JSON.stringify(message)),
-		{ persistent: true },
-		async (error: Error) => {
-			if (error !== null) {
-				if (!connection._destroying) {
-					await amqpConnection.pool.destroy(connection);
-				}
-				reject(error);
-			} else {
-				await amqpConnection.pool.release(connection);
-				resolve();
-			}
-		},
-	));
+	try {
+		const channel = await connection.createConfirmChannel();
+		await assertRejectableQueue(channel, queueName);
+		await new Promise((resolve: () => void, reject: (error: Error) => void) => channel.sendToQueue(
+			queueName,
+			new Buffer(JSON.stringify(message)),
+			{ persistent: true },
+			(error: Error) => error !== null ? reject(error) : resolve(),
+		));
+		await amqpConnection.pool.release(connection);
+	} catch (error) {
+		await amqpConnection.pool.destroy(connection);
+		throw error;
+	}
 }
