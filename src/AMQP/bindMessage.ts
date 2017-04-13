@@ -19,6 +19,7 @@ export default async function bindMessage<TMessage>(
 		if (!connection._destroying) {
 			await amqpConnection.pool.destroy(connection);
 		}
+		console.log(`Bindings message failed. Retry bind message after ${delayBeforeRetry} ms`);
 		await wait(delayBeforeRetry);
 		try {
 			await bindMessage(amqpConnection, queueName, onMessage, options, delayBeforeRetry);
