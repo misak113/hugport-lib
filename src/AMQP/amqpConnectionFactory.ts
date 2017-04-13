@@ -1,7 +1,7 @@
 
 import * as amqp from 'amqplib';
 import wait from '../Timer/wait';
-const genericPool = require('../../node_modules/generic-pool');
+const genericPool = require('generic-pool');
 
 export interface IDestroyable {
 	_destroying: boolean;
