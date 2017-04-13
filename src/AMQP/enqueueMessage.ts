@@ -10,13 +10,13 @@ export async function enqueueMessageRetryable<TMessage>(
 	options: {
 		priority?: number;
 	} = {},
-	numberOfRetrying: number = 3,
+	numberOfRetrying: number = -1,
 	delayBeforeRetry: number = 500,
 ) {
 	try {
 		await enqueueMessage(amqpConnection, queueName, message, options);
 	} catch (error) {
-		if (numberOfRetrying > 0) {
+		if (numberOfRetrying !== 0) {
 			console.log(`Enqueue message failed. Retry after ${delayBeforeRetry} ms`);
 			await wait(delayBeforeRetry);
 			await enqueueMessageRetryable(amqpConnection, queueName, message, options, numberOfRetrying - 1, delayBeforeRetry * 2);
