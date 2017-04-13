@@ -1,7 +1,7 @@
 
 import { IAMQPConnection } from '../amqpConnectionFactory';
 import { enqueueMessageRetryable } from '../enqueueMessage';
-import bindMessage from '../bindMessage';
+import { bindMessageRetryable } from '../bindMessage';
 import IActionLog from './IActionLog';
 
 const QUEUE_NAME = 'action_logs';
@@ -14,5 +14,5 @@ export async function enqueue(amqpConnection: IAMQPConnection, actionLog: IActio
 
 export async function bindAll(amqpConnection: IAMQPConnection, onActionLog: (actionLog: IActionLog) => Promise<void>) {
 	const queueName = QUEUE_NAME;
-	await bindMessage(amqpConnection, queueName, onActionLog, { priority: PRIORITY });
+	await bindMessageRetryable(amqpConnection, queueName, onActionLog, { priority: PRIORITY });
 }

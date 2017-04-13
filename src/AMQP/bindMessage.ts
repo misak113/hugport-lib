@@ -4,7 +4,7 @@ import { Message } from 'amqplib';
 import { IAMQPConnection } from './amqpConnectionFactory';
 import { assertRejectableQueue } from './queueConfigurator';
 
-export default async function bindMessage<TMessage>(
+export async function bindMessageRetryable<TMessage>(
 	amqpConnection: IAMQPConnection,
 	queueName: string,
 	onMessage: (message: TMessage) => Promise<void>,
@@ -13,25 +13,29 @@ export default async function bindMessage<TMessage>(
 	} = {},
 	delayBeforeRetry: number = 1000,
 ) {
+	while (true) {
+		await new Promise(async (resolve: () => void) => bindMessage(
+			amqpConnection,
+			queueName,
+			onMessage,
+			options,
+			() => resolve(),
+		));
+		await wait(delayBeforeRetry);
+	}
+}
+
+export async function bindMessage<TMessage>(
+	amqpConnection: IAMQPConnection,
+	queueName: string,
+	onMessage: (message: TMessage) => Promise<void>,
+	options: {
+		priority?: number;
+	} = {},
+	onEnded?: () => void,
+) {
 	const connection = await amqpConnection.pool.acquire(options.priority);
 	const channel = await connection.createConfirmChannel();
-	async function handleError() {
-		if (!connection._destroying) {
-			await amqpConnection.pool.destroy(connection);
-		}
-		console.log(`Bindings message failed. Retry bind message after ${delayBeforeRetry} ms`);
-		await wait(delayBeforeRetry);
-		try {
-			await bindMessage(amqpConnection, queueName, onMessage, options, delayBeforeRetry);
-		} catch (error) {
-			handleError();
-		}
-	}
-	channel.on('error', (error:  Error) => {
-		handleError();
-		throw error;
-	});
-	channel.on('close', () => handleError());
 	await assertRejectableQueue(channel, queueName);
 	await channel.consume(queueName, async (amqpMessage: Message) => {
 		try {
@@ -41,6 +45,19 @@ export default async function bindMessage<TMessage>(
 		} catch (error) {
 			console.error(error);
 			channel.nack(amqpMessage);
+		}
+	});
+	channel.once('error', (error:  Error) => {
+		if (onEnded) {
+			onEnded();
+			onEnded = undefined;
+		}
+		throw error;
+	});
+	channel.once('close', () => {
+		if (onEnded) {
+			onEnded();
+			onEnded = undefined;
 		}
 	});
 }

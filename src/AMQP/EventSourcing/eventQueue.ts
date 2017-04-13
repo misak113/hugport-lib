@@ -1,7 +1,7 @@
 
 import { IAMQPConnection } from '../amqpConnectionFactory';
 import { enqueueMessageRetryable } from '../enqueueMessage';
-import bindMessage from '../bindMessage';
+import { bindMessageRetryable } from '../bindMessage';
 import fetchNextMessage from '../fetchNextMessage';
 import IEvent, { IEventPayload } from './IEvent';
 
@@ -37,5 +37,5 @@ export async function bindOne<TPayload extends IEventPayload>(
 	onEvent: (event: IEvent<TPayload>) => Promise<void>
 ) {
 	const queueName = QUEUE_NAME_PREFIX + eventType;
-	await bindMessage(amqpConnection, queueName, onEvent, { priority: PRIORITY });
+	await bindMessageRetryable(amqpConnection, queueName, onEvent, { priority: PRIORITY });
 }
