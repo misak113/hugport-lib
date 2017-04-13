@@ -1,64 +1,41 @@
 
-import { Connection, Message, Channel } from 'amqplib';
+import { IAMQPConnection } from '../amqpConnectionFactory';
+import { enqueueMessageRetryable } from '../enqueueMessage';
+import bindMessage from '../bindMessage';
+import fetchNextMessage from '../fetchNextMessage';
 import IEvent, { IEventPayload } from './IEvent';
 
 const QUEUE_NAME_PREFIX = 'events.';
+const PRIORITY = 0;
 
-export async function enqueue(connection: Connection, event: IEvent<IEventPayload>) {
+export async function enqueue(amqpConnection: IAMQPConnection, event: IEvent<IEventPayload>) {
 	const queueName = QUEUE_NAME_PREFIX + event.type;
-	const channel = await connection.createConfirmChannel();
-	await assertQueue(channel, queueName);
-	channel.sendToQueue(
-		queueName,
-		new Buffer(JSON.stringify(event)),
-		{ persistent: true },
-	);
+	await enqueueMessageRetryable(amqpConnection, queueName, event, { priority: PRIORITY });
 }
 
-export async function fetchNext<TPayload extends IEventPayload>(connection: Connection, eventType: string): Promise<IEvent<TPayload> | null> {
+export async function fetchNext<TPayload extends IEventPayload>(
+	amqpConnection: IAMQPConnection,
+	eventType: string
+): Promise<IEvent<TPayload> | null> {
 	const queueName = QUEUE_NAME_PREFIX + eventType;
-	const channel = await connection.createConfirmChannel();
-	await assertQueue(channel, queueName);
-	const message: Message | boolean = await channel.get(queueName, { noAck: true });
-	if (message && typeof message !== 'boolean') {
-		return message.content ? JSON.parse(message.content.toString()) : null;
-	} else {
-		return null;
-	}
+	return await fetchNextMessage<IEvent<TPayload> | null>(amqpConnection, queueName, { priority: PRIORITY });
 }
 
 export async function bindMore<TPayload extends IEventPayload>(
-	connection: Connection,
+	amqpConnection: IAMQPConnection,
 	eventTypes: string[],
 	onEvent: (event: IEvent<TPayload>) => Promise<void>
 ) {
 	for (let eventType of eventTypes) {
-		await bindOne(connection, eventType, onEvent);
+		await bindOne(amqpConnection, eventType, onEvent);
 	}
 }
 
 export async function bindOne<TPayload extends IEventPayload>(
-	connection: Connection,
+	amqpConnection: IAMQPConnection,
 	eventType: string,
 	onEvent: (event: IEvent<TPayload>) => Promise<void>
 ) {
 	const queueName = QUEUE_NAME_PREFIX + eventType;
-	const channel = await connection.createConfirmChannel();
-	await assertQueue(channel, queueName);
-	await channel.consume(queueName, async (message: Message) => {
-		try {
-			const event = JSON.parse(message.content.toString());
-			await onEvent(event);
-			channel.ack(message);
-		} catch (error) {
-			console.error(error);
-			channel.nack(message);
-		}
-	});
-}
-
-async function assertQueue(channel: Channel, queueName: string) {
-	await channel.assertQueue(queueName, {
-		deadLetterExchange: 'rejected'
-	});
+	await bindMessage(amqpConnection, queueName, onEvent, { priority: PRIORITY });
 }

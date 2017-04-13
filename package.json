@@ -27,6 +27,7 @@
   "license": "MIT",
   "dependencies": {
     "co": "^4.6.0",
+    "generic-pool": "^3.1.7",
     "mocha-jenkins-reporter": "^0.2.6"
   },
   "optionalPeerDependencies": {
