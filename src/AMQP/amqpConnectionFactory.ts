@@ -2,6 +2,7 @@
 import * as amqp from 'amqplib';
 import MemoryArrayStorage from '../Storage/MemoryArrayStorage';
 import IUnqueuedMessage from './IUnqueuedMessage';
+import ChannelProvider from './ChannelProvider';
 import QueuePublisher from './QueuePublisher';
 import IAMQPPool from './IAMQPPool';
 import * as Debug from 'debug';
@@ -62,9 +63,10 @@ export function createAmqpConnection(dsn: string): IAMQPConnection {
 		throw error;
 	});
 	const unqueuedMessageStorage = new MemoryArrayStorage<IUnqueuedMessage>();
+	const channelProvider = new ChannelProvider(pool);
 	return {
 		pool,
-		queuePublisher: new QueuePublisher(pool, unqueuedMessageStorage),
+		queuePublisher: new QueuePublisher(channelProvider, unqueuedMessageStorage),
 		connect: async function () {
 			debug('connect');
 			const initialConnection = await pool.acquire();
