@@ -4,7 +4,9 @@ import MemoryArrayStorage from '../Storage/MemoryArrayStorage';
 import IUnqueuedMessage from './IUnqueuedMessage';
 import QueuePublisher from './QueuePublisher';
 import IAMQPPool from './IAMQPPool';
+import * as Debug from 'debug';
 const genericPool = require('generic-pool');
+const debug = Debug('@signageos/lib:AMQP:amqpConnectionFactory');
 
 export interface IAMQPConnection {
 	pool: IAMQPPool;
@@ -22,18 +24,20 @@ declare module 'amqplib' {
 export function createAmqpConnection(dsn: string): IAMQPConnection {
 	const factory = {
 		async create(): Promise<amqp.Connection> {
+			debug('Create connection');
 			const connection = await amqp.connect(dsn);
 			connection.isClosed = false;
 			connection.on('error', (error: Error) => {
 				console.error('AMQP error connection', error);
 			});
 			connection.on('close', () => {
-				console.info('AMQP closed connection');
+				debug('Closed connection');
 				connection.isClosed = true;
 			});
 			return connection;
 		},
 		async destroy(connection: amqp.Connection) {
+			debug('Destroy connection');
 			if (!connection.isClosed) {
 				await connection.close();
 			}
@@ -62,10 +66,12 @@ export function createAmqpConnection(dsn: string): IAMQPConnection {
 		pool,
 		queuePublisher: new QueuePublisher(pool, unqueuedMessageStorage),
 		connect: async function () {
+			debug('connect');
 			const initialConnection = await pool.acquire();
 			await pool.release(initialConnection);
 		},
 		close: async function () {
+			debug('close');
 			await pool.drain();
 			pool.clear();
 		},

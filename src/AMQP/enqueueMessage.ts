@@ -2,6 +2,8 @@
 import wait from '../Timer/wait';
 import { IAMQPConnection } from './amqpConnectionFactory';
 import { assertRejectableQueue } from './queueConfigurator';
+import * as Debug from 'debug';
+const debug = Debug('@signageos/lib:AMQP:enqueueMessage');
 
 export async function enqueueMessageRetryable<TMessage>(
 	amqpConnection: IAMQPConnection,
@@ -17,7 +19,7 @@ export async function enqueueMessageRetryable<TMessage>(
 		await enqueueMessage(amqpConnection, queueName, message, options);
 	} catch (error) {
 		if (numberOfRetrying !== 0) {
-			console.log(`Enqueue message failed. Retry after ${delayBeforeRetry} ms`);
+			debug(`Enqueue message failed. Retry after ${delayBeforeRetry} ms`);
 			await wait(delayBeforeRetry);
 			await enqueueMessageRetryable(amqpConnection, queueName, message, options, numberOfRetrying - 1, delayBeforeRetry * 2);
 		} else {
