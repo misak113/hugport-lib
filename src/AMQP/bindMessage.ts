@@ -14,13 +14,19 @@ export async function bindMessageRetryable<TMessage>(
 	delayBeforeRetry: number = 1000,
 ) {
 	while (true) {
-		await new Promise(async (resolve: () => void) => bindMessage(
-			amqpConnection,
-			queueName,
-			onMessage,
-			options,
-			() => resolve(),
-		));
+		await new Promise(async (resolve: () => void) => {
+			try {
+				await bindMessage(
+					amqpConnection,
+					queueName,
+					onMessage,
+					options,
+					() => resolve(),
+				);
+			} catch (error) {
+				resolve();
+			}
+		});
 		await wait(delayBeforeRetry);
 	}
 }
@@ -36,17 +42,6 @@ export async function bindMessage<TMessage>(
 ) {
 	const connection = await amqpConnection.pool.acquire(options.priority);
 	const channel = await connection.createConfirmChannel();
-	await assertRejectableQueue(channel, queueName);
-	await channel.consume(queueName, async (amqpMessage: Message) => {
-		try {
-			const message = JSON.parse(amqpMessage.content.toString());
-			await onMessage(message);
-			channel.ack(amqpMessage);
-		} catch (error) {
-			console.error(error);
-			channel.nack(amqpMessage);
-		}
-	});
 	channel.once('error', (error:  Error) => {
 		if (onEnded) {
 			onEnded();
@@ -58,6 +53,17 @@ export async function bindMessage<TMessage>(
 		if (onEnded) {
 			onEnded();
 			onEnded = undefined;
+		}
+	});
+	await assertRejectableQueue(channel, queueName);
+	await channel.consume(queueName, async (amqpMessage: Message) => {
+		try {
+			const message = JSON.parse(amqpMessage.content.toString());
+			await onMessage(message);
+			channel.ack(amqpMessage);
+		} catch (error) {
+			console.error(error);
+			channel.nack(amqpMessage);
 		}
 	});
 }
