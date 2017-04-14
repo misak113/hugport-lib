@@ -62,8 +62,8 @@ export async function bindMessage<TMessage>(
 			await onMessage(message);
 			channel.ack(amqpMessage);
 		} catch (error) {
-			console.error(error);
 			channel.nack(amqpMessage);
+			throw error;
 		}
 	});
 }

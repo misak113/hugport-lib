@@ -72,8 +72,8 @@ export default class ChannelProvider {
 						await onMessage(message);
 						amqplibChannel.ack(amqplibMessage);
 					} catch (error) {
-						console.error(error);
 						amqplibChannel.nack(amqplibMessage);
+						throw error;
 					}
 				});
 			},
