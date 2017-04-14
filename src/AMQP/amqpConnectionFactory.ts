@@ -32,7 +32,7 @@ export function createAmqpConnection(dsn: string): IAMQPConnection {
 			const connection = await amqp.connect(dsn);
 			connection.isClosed = false;
 			connection.on('error', (error: Error) => {
-				console.error('AMQP error connection', error);
+				throw error;
 			});
 			connection.on('close', () => {
 				debug('Closed connection');
