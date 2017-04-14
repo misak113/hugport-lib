@@ -3,6 +3,7 @@ import {
 	Connection as AmqplibConnection,
 	Channel as AmqplibChannel,
 	ConfirmChannel as AmqplibConfirmChannel,
+	Message as AmqplibMessage,
 } from 'amqplib';
 import IChannel from './IChannel';
 import IAMQPPool from './IAMQPPool';
@@ -47,6 +48,34 @@ export default class ChannelProvider {
 						sendOptions,
 					);
 				}
+			},
+			consume: async (onMessage: (message: any) => Promise<void>, onEnded?: () => void) => {
+				const amqplibChannel = options.confirmable
+					? await this.getAmqplibConfirmChannel(amqplibConnection, queueName)
+					: await this.getAmqplibChannel(amqplibConnection, queueName);
+				amqplibChannel.once('error', (error:  Error) => {
+					if (onEnded) {
+						onEnded();
+						onEnded = undefined;
+					}
+					throw error;
+				});
+				amqplibChannel.once('close', () => {
+					if (onEnded) {
+						onEnded();
+						onEnded = undefined;
+					}
+				});
+				await amqplibChannel.consume(queueName, async (amqplibMessage: AmqplibMessage) => {
+					try {
+						const message = JSON.parse(amqplibMessage.content.toString());
+						await onMessage(message);
+						amqplibChannel.ack(amqplibMessage);
+					} catch (error) {
+						console.error(error);
+						amqplibChannel.nack(amqplibMessage);
+					}
+				});
 			},
 		};
 	}

@@ -2,8 +2,10 @@
 import * as amqp from 'amqplib';
 import MemoryArrayStorage from '../Storage/MemoryArrayStorage';
 import IUnqueuedMessage from './IUnqueuedMessage';
+import IUnsubscribedMessage from './IUnsubscribedMessage';
 import ChannelProvider from './ChannelProvider';
 import QueuePublisher from './QueuePublisher';
+import QueueSubscriber from './QueueSubscriber';
 import IAMQPPool from './IAMQPPool';
 import * as Debug from 'debug';
 const genericPool = require('generic-pool');
@@ -12,6 +14,7 @@ const debug = Debug('@signageos/lib:AMQP:amqpConnectionFactory');
 export interface IAMQPConnection {
 	pool: IAMQPPool;
 	queuePublisher: QueuePublisher;
+	queueSubscriber: QueueSubscriber;
 	connect: () => Promise<void>;
 	close: () => Promise<void>;
 }
@@ -63,10 +66,12 @@ export function createAmqpConnection(dsn: string): IAMQPConnection {
 		throw error;
 	});
 	const unqueuedMessageStorage = new MemoryArrayStorage<IUnqueuedMessage>();
+	const unsubscribedMessageStorage = new MemoryArrayStorage<IUnsubscribedMessage>();
 	const channelProvider = new ChannelProvider(pool);
 	return {
 		pool,
 		queuePublisher: new QueuePublisher(channelProvider, unqueuedMessageStorage),
+		queueSubscriber: new QueueSubscriber(channelProvider, unsubscribedMessageStorage),
 		connect: async function () {
 			debug('connect');
 			const initialConnection = await pool.acquire();
