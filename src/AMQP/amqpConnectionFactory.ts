@@ -1,10 +1,14 @@
 
 import * as amqp from 'amqplib';
+import MemoryArrayStorage from '../Storage/MemoryArrayStorage';
+import IUnqueuedMessage from './IUnqueuedMessage';
+import QueuePublisher from './QueuePublisher';
 import IAMQPPool from './IAMQPPool';
 const genericPool = require('generic-pool');
 
 export interface IAMQPConnection {
 	pool: IAMQPPool;
+	queuePublisher: QueuePublisher;
 	connect: () => Promise<void>;
 	close: () => Promise<void>;
 }
@@ -53,8 +57,10 @@ export function createAmqpConnection(dsn: string): IAMQPConnection {
 	pool.on('factoryDestroyError', (error: Error) => {
 		throw error;
 	});
+	const unqueuedMessageStorage = new MemoryArrayStorage<IUnqueuedMessage>();
 	return {
 		pool,
+		queuePublisher: new QueuePublisher(pool, unqueuedMessageStorage),
 		connect: async function () {
 			const initialConnection = await pool.acquire();
 			await pool.release(initialConnection);
