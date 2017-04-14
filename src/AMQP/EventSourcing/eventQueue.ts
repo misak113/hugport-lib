@@ -1,6 +1,5 @@
 
 import { IAMQPConnection } from '../amqpConnectionFactory';
-import { enqueueMessageRetryable } from '../enqueueMessage';
 import { bindMessageRetryable } from '../bindMessage';
 import fetchNextMessage from '../fetchNextMessage';
 import IEvent, { IEventPayload } from './IEvent';
@@ -10,7 +9,10 @@ const PRIORITY = 0;
 
 export async function enqueue(amqpConnection: IAMQPConnection, event: IEvent<IEventPayload>) {
 	const queueName = QUEUE_NAME_PREFIX + event.type;
-	await enqueueMessageRetryable(amqpConnection, queueName, event, { priority: PRIORITY });
+	await amqpConnection.queuePublisher.enqueueRepeatable(queueName, event, {
+		persistent: true,
+		confirmable: true,
+	});
 }
 
 export async function fetchNext<TPayload extends IEventPayload>(

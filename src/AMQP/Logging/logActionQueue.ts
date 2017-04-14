@@ -1,6 +1,5 @@
 
 import { IAMQPConnection } from '../amqpConnectionFactory';
-import { enqueueMessageRetryable } from '../enqueueMessage';
 import { bindMessageRetryable } from '../bindMessage';
 import IActionLog from './IActionLog';
 
@@ -9,7 +8,10 @@ const PRIORITY = 2;
 
 export async function enqueue(amqpConnection: IAMQPConnection, actionLog: IActionLog) {
 	const queueName = QUEUE_NAME;
-	await enqueueMessageRetryable(amqpConnection, queueName, actionLog, { priority: PRIORITY });
+	await amqpConnection.queuePublisher.enqueueRepeatable(queueName, actionLog, {
+		persistent: true,
+		confirmable: true,
+	});
 }
 
 export async function bindAll(amqpConnection: IAMQPConnection, onActionLog: (actionLog: IActionLog) => Promise<void>) {
