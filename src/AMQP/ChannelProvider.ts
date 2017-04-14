@@ -6,7 +6,7 @@ import {
 } from 'amqplib';
 import IChannel from './IChannel';
 import IAMQPPool from './IAMQPPool';
-import IEnqueueOptions from './IEnqueueOptions';
+import IQueueOptions from './IQueueOptions';
 import * as Debug from 'debug';
 const debug = Debug('@signageos/lib:AMQP:ChannelProvider');
 
@@ -23,7 +23,7 @@ export default class ChannelProvider {
 		this.amqplibConfirmChannnelMap = {};
 	}
 
-	public async getChannel(queueName: string, options: IEnqueueOptions): Promise<IChannel<any>> {
+	public async getChannel(queueName: string, options: IQueueOptions): Promise<IChannel<any>> {
 		const amqplibConnection = await this.getAmqplibConnection();
 		return {
 			send: async (message: any) => {

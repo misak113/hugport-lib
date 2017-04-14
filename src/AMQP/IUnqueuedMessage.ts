@@ -1,10 +1,10 @@
 
-import IEnqueueOptions from './IEnqueueOptions';
+import IQueueOptions from './IQueueOptions';
 
 export default IUnqueuedMessage;
 interface IUnqueuedMessage {
 	queueName: string;
 	message: any;
-	options: IEnqueueOptions;
+	options: IQueueOptions;
 	resolve: () => void;
 }

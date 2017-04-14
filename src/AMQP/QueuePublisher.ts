@@ -1,7 +1,7 @@
 
 import IArrayStorage from '../Storage/IArrayStorage';
 import IUnqueuedMessage from './IUnqueuedMessage';
-import IEnqueueOptions from './IEnqueueOptions';
+import IQueueOptions from './IQueueOptions';
 import ChannelProvider from './ChannelProvider';
 import * as Debug from 'debug';
 const debug = Debug('@signageos/lib:AMQP:QueuePublisher');
@@ -20,7 +20,7 @@ export default class QueuePublisher {
 	public async enqueue<TMessage>(
 		queueName: string,
 		message: TMessage,
-		options: IEnqueueOptions = {},
+		options: IQueueOptions = {},
 	) {
 		const channel = await this.channelProvider.getChannel(queueName, options);
 		await channel.send(message);
@@ -30,7 +30,7 @@ export default class QueuePublisher {
 	public async enqueueRepeatable<TMessage>(
 		queueName: string,
 		message: TMessage,
-		options: IEnqueueOptions = {},
+		options: IQueueOptions = {},
 	) {
 		try {
 			await this.enqueue(queueName, message, options);
