@@ -27,6 +27,7 @@
   "license": "MIT",
   "dependencies": {
     "co": "^4.6.0",
+    "debug": "^2.6.3",
     "generic-pool": "^3.1.7",
     "mocha-jenkins-reporter": "^0.2.6"
   },
@@ -42,6 +43,7 @@
   },
   "devDependencies": {
     "@types/amqplib": "^0.5.1",
+    "@types/debug": "^0.0.29",
     "@types/node": "^7.0.12",
     "@types/pg-promise": "^0.0.29",
     "@types/rethinkdb": "^2.3.2",
