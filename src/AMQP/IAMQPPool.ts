@@ -1,9 +1,6 @@
 
 import { Connection } from 'amqplib';
+import IBasePool from '../Pool/IBasePool';
 
 export default IAMQPPool;
-interface IAMQPPool {
-	acquire(priority?: number): Promise<Connection>;
-	release(connection: Connection): Promise<void>;
-	destroy(connection: Connection): Promise<void>;
-}
+interface IAMQPPool extends IBasePool<Connection> {}
