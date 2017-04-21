@@ -17,9 +17,9 @@ export default class QueuePublisher {
 		private unsubscribedMessageStorage: IArrayStorage<IUnsubscribedMessage>,
 	) {}
 
-	public async subscribe<TMessage>(
+	public async subscribe<TMessage, TResponseMessage>(
 		queueName: string,
-		onMessage: (message: TMessage) => Promise<void>,
+		onMessage: (message: TMessage) => Promise<TResponseMessage>,
 		options: IQueueOptions = {},
 		onEnded?: () => void
 	) {
@@ -28,9 +28,9 @@ export default class QueuePublisher {
 		debug('Messages subscribed: %s', queueName);
 	}
 
-	public async subscribeRepeatable<TMessage>(
+	public async subscribeRepeatable<TMessage, TResponseMessage>(
 		queueName: string,
-		onMessage: (message: TMessage) => Promise<void>,
+		onMessage: (message: TMessage) => Promise<TResponseMessage>,
 		options: IQueueOptions = {},
 	) {
 		try {
@@ -44,9 +44,9 @@ export default class QueuePublisher {
 		}
 	}
 
-	private repeateSubscription<TMessage>(
+	private repeateSubscription<TMessage, TResponseMessage>(
 		queueName: string,
-		onMessage: (message: TMessage) => Promise<void>,
+		onMessage: (message: TMessage) => Promise<TResponseMessage>,
 		options: IQueueOptions,
 	) {
 		return new Promise((resolve: () => void) => {
