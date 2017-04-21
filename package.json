@@ -50,6 +50,7 @@
     "@types/spex": "^0.0.1",
     "hugport-codestyle": "^0.0.8",
     "raven-js": "^3.12.1",
+    "tslint": "^5.1.0",
     "typescript": "^2.2.2"
   }
 }
