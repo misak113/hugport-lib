@@ -1,6 +1,7 @@
 
 import { IAMQPConnection } from '../amqpConnectionFactory';
 import ICommand from './ICommand';
+import ICommandError from './ICommandError';
 
 const QUEUE_NAME = 'commands';
 const OPTIONS = {
@@ -8,21 +9,21 @@ const OPTIONS = {
 	confirmable: true,
 };
 
-export type IResponseMessage = IProcessSucceedMessage | IProcessFailedMessage | IErrorMessage;
+export type IResponse<TCommandError extends ICommandError<string>> = IProcessSucceed | IProcessFailed<TCommandError> | IError;
 
-export interface IProcessSucceedMessage {
+export interface IProcessSucceed {
 	status: 'process_succeed';
 	command: ICommand;
 }
 
-export interface IProcessFailedMessage {
+export interface IProcessFailed<TCommandError extends ICommandError<string>> {
 	status: 'process_failed';
 	command: ICommand;
-	errorType: string;
-	errorMessage: string;
+	message: string;
+	error: TCommandError;
 }
 
-export interface IErrorMessage {
+export interface IError {
 	status: 'error';
 	error: any;
 }
