@@ -28,7 +28,7 @@ export default class ChannelProvider {
 
 	public async getChannel(queueName: string, options: IQueueOptions = {}): Promise<IChannel<any>> {
 		const amqplibConnection = await this.getAmqplibConnection();
-		return {
+		const channel = {
 			send: async (message: any) => {
 				const encodedMessageBuffer = this.encodeMessageIntoBuffer(message);
 				const amqplibSendOptions = this.createAmqplibSendOptions(options);
@@ -62,6 +62,15 @@ export default class ChannelProvider {
 				return await responsePromise;
 			},
 			consume: async (onMessage: (message: any) => Promise<void>, onEnded?: () => void) => {
+				await channel.consumeExpectingConfirmation(
+					async (message: any, ack: () => void) => {
+						await onMessage(message);
+						ack();
+					},
+					onEnded,
+				);
+			},
+			consumeExpectingConfirmation: async (onMessage: (message: any, ack: () => void, nack: () => void) => Promise<void>, onEnded?: () => void) => {
 				const amqplibChannel = options.confirmable
 					? await this.getAmqplibConfirmChannel(amqplibConnection, queueName)
 					: await this.getAmqplibChannel(amqplibConnection, queueName);
@@ -81,7 +90,11 @@ export default class ChannelProvider {
 				await amqplibChannel.consume(queueName, async (amqplibMessage: AmqplibMessage) => {
 					try {
 						const message = this.decodeMessageBuffer(amqplibMessage.content);
-						const response = await onMessage(message);
+						const response = await onMessage(
+							message,
+							() => amqplibChannel.ack(amqplibMessage),
+							() => amqplibChannel.nack(amqplibMessage),
+						);
 						if (amqplibMessage.properties.replyTo) {
 							const amqplibResponseChannel = await this.getAmqplibResponseChannel(
 								amqplibConnection,
@@ -93,7 +106,6 @@ export default class ChannelProvider {
 								{ correlationId: amqplibMessage.properties.correlationId },
 							);
 						}
-						amqplibChannel.ack(amqplibMessage);
 					} catch (error) {
 						amqplibChannel.nack(amqplibMessage);
 						throw error;
@@ -101,6 +113,7 @@ export default class ChannelProvider {
 				});
 			},
 		};
+		return channel;
 	}
 
 	private createAmqplibSendOptions(options: IQueueOptions) {

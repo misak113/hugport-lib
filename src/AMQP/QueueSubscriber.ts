@@ -35,22 +35,50 @@ export default class QueuePublisher {
 	) {
 		try {
 			await this.subscribe(queueName, onMessage, options, async () => {
-				await this.repeateSubscription(queueName, onMessage, options);
+				await this.repeateSubscription(queueName, onMessage, options, false);
 			});
 			debug('Messages subscribed: %s', queueName);
 		} catch (error) {
 			debug('Error during subscribe repeatable: %s', queueName, error);
-			await this.repeateSubscription(queueName, onMessage, options);
+			await this.repeateSubscription(queueName, onMessage, options, false);
+		}
+	}
+
+	public async subscribeExpectingConfirmation<TMessage, TResponseMessage>(
+		queueName: string,
+		onMessage: (message: TMessage, ack: () => void, nack: () => void) => Promise<TResponseMessage>,
+		options: IQueueOptions = {},
+		onEnded?: () => void
+	) {
+		const channel = await this.channelProvider.getChannel(queueName, options);
+		await channel.consumeExpectingConfirmation(onMessage, onEnded);
+		debug('Messages subscribed expecting confirmation: %s', queueName);
+	}
+
+	public async subscribeExpectingConfirmationRepeatable<TMessage, TResponseMessage>(
+		queueName: string,
+		onMessage: (message: TMessage, ack: () => void, nack: () => void) => Promise<TResponseMessage>,
+		options: IQueueOptions = {},
+	) {
+		try {
+			await this.subscribeExpectingConfirmation(queueName, onMessage, options, async () => {
+				await this.repeateSubscription(queueName, onMessage, options, true);
+			});
+			debug('Messages subscribed expecting confirmation: %s', queueName);
+		} catch (error) {
+			debug('Error during subscribe expecting confirmation repeatable: %s', queueName, error);
+			await this.repeateSubscription(queueName, onMessage, options, true);
 		}
 	}
 
 	private repeateSubscription<TMessage, TResponseMessage>(
 		queueName: string,
-		onMessage: (message: TMessage) => Promise<TResponseMessage>,
+		onMessage: (message: TMessage, ack?: () => void, nack?: () => void) => Promise<TResponseMessage>,
 		options: IQueueOptions,
+		confirmationWaiting: boolean,
 	) {
 		return new Promise((resolve: () => void) => {
-			this.unsubscribedMessageStorage.push({ queueName, onMessage, options, resolve });
+			this.unsubscribedMessageStorage.push({ queueName, onMessage, options, resolve, confirmationWaiting });
 			this.tryResubscribeAfterTimeout();
 		});
 	}
@@ -59,11 +87,17 @@ export default class QueuePublisher {
 		while (true) {
 			const unqueuedMessage = this.unsubscribedMessageStorage.shift();
 			if (unqueuedMessage) {
-				const { queueName, onMessage, options, resolve } = unqueuedMessage;
+				const { queueName, onMessage, options, resolve, confirmationWaiting } = unqueuedMessage;
 				try {
-					await this.subscribe(queueName, onMessage, options, async () => {
-						await this.repeateSubscription(queueName, onMessage, options);
-					});
+					if (!confirmationWaiting) {
+						await this.subscribe(queueName, onMessage, options, async () => {
+							await this.repeateSubscription(queueName, onMessage, options, confirmationWaiting);
+						});
+					} else {
+						await this.subscribeExpectingConfirmation(queueName, onMessage, options, async () => {
+							await this.repeateSubscription(queueName, onMessage, options, confirmationWaiting);
+						});
+					}
 					resolve();
 				} catch (error) {
 					debug('Error during subscribe from storage: %s', queueName, error);
