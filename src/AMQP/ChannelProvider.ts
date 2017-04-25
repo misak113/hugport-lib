@@ -10,6 +10,7 @@ import { generateUniqueHash } from '../Hash/generator';
 import IChannel from './IChannel';
 import IAMQPPool from './IAMQPPool';
 import IQueueOptions from './IQueueOptions';
+import INackOptions from './INackOptions';
 import * as Debug from 'debug';
 const debug = Debug('@signageos/lib:AMQP:ChannelProvider');
 
@@ -71,7 +72,7 @@ export default class ChannelProvider {
 					onEnded,
 				);
 			},
-			consumeExpectingConfirmation: async (onMessage: (message: any, ack: () => void, nack: () => void) => Promise<void>, onEnded?: () => void) => {
+			consumeExpectingConfirmation: async (onMessage: (message: any, ack: () => void, nack: (options?: INackOptions) => void) => Promise<void>, onEnded?: () => void) => {
 				const amqplibChannel = options.confirmable
 					? await this.getAmqplibConfirmChannel(amqplibConnection, queueName)
 					: await this.getAmqplibChannel(amqplibConnection, queueName);
@@ -94,7 +95,11 @@ export default class ChannelProvider {
 						const response = await onMessage(
 							message,
 							() => amqplibChannel.ack(amqplibMessage),
-							() => amqplibChannel.nack(amqplibMessage),
+							(options?: INackOptions) => amqplibChannel.nack(
+								amqplibMessage,
+								undefined,
+								options ? options.requeue : undefined // default refers to true
+							),
 						);
 						if (amqplibMessage.properties.replyTo) {
 							const amqplibResponseChannel = await this.getAmqplibResponseChannel(

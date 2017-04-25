@@ -3,6 +3,7 @@ import IArrayStorage from '../Storage/IArrayStorage';
 import IUnsubscribedMessage from './IUnsubscribedMessage';
 import IQueueOptions from './IQueueOptions';
 import ChannelProvider from './ChannelProvider';
+import INackOptions from './INackOptions';
 import * as Debug from 'debug';
 const debug = Debug('@signageos/lib:AMQP:QueueSubscriber');
 
@@ -46,7 +47,7 @@ export default class QueuePublisher {
 
 	public async subscribeExpectingConfirmation<TMessage, TResponseMessage>(
 		queueName: string,
-		onMessage: (message: TMessage, ack: () => void, nack: () => void) => Promise<TResponseMessage>,
+		onMessage: (message: TMessage, ack: () => void, nack: (options?: INackOptions) => void) => Promise<TResponseMessage>,
 		options: IQueueOptions = {},
 		onEnded?: () => void
 	) {
@@ -57,7 +58,7 @@ export default class QueuePublisher {
 
 	public async subscribeExpectingConfirmationRepeatable<TMessage, TResponseMessage>(
 		queueName: string,
-		onMessage: (message: TMessage, ack: () => void, nack: () => void) => Promise<TResponseMessage>,
+		onMessage: (message: TMessage, ack: () => void, nack: (options?: INackOptions) => void) => Promise<TResponseMessage>,
 		options: IQueueOptions = {},
 	) {
 		try {
@@ -73,7 +74,7 @@ export default class QueuePublisher {
 
 	private repeateSubscription<TMessage, TResponseMessage>(
 		queueName: string,
-		onMessage: (message: TMessage, ack?: () => void, nack?: () => void) => Promise<TResponseMessage>,
+		onMessage: (message: TMessage, ack?: () => void, nack?: (options?: INackOptions) => void) => Promise<TResponseMessage>,
 		options: IQueueOptions,
 		confirmationWaiting: boolean,
 	) {

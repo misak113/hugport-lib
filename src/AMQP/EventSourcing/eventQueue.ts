@@ -1,6 +1,7 @@
 
 import { IAMQPConnection } from '../amqpConnectionFactory';
 import fetchNextMessage from '../fetchNextMessage';
+import INackOptions from '../INackOptions';
 import IEvent, { IEventPayload } from './IEvent';
 
 const QUEUE_NAME_PREFIX = 'events.';
@@ -44,7 +45,7 @@ export async function bindOne<TPayload extends IEventPayload>(
 export async function bindOneExpectingConfirmation<TPayload extends IEventPayload>(
 	amqpConnection: IAMQPConnection,
 	eventType: string,
-	onEvent: (event: IEvent<TPayload>, ack: () => void, nack: () => void) => Promise<void>
+	onEvent: (event: IEvent<TPayload>, ack: () => void, nack: (options?: INackOptions) => void) => Promise<void>
 ) {
 	const queueName = QUEUE_NAME_PREFIX + eventType;
 	await amqpConnection.queueSubscriber.subscribeExpectingConfirmationRepeatable(queueName, onEvent, OPTIONS);
