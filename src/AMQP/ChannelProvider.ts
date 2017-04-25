@@ -63,16 +63,17 @@ export default class ChannelProvider {
 				await sentPromise;
 				return await responsePromise;
 			},
-			consume: async (onMessage: (message: any) => Promise<void>, onEnded?: () => void) => {
+			consume: async (onMessage: (message: any) => Promise<any>, onEnded?: () => void) => {
 				await channel.consumeExpectingConfirmation(
 					async (message: any, ack: () => void) => {
-						await onMessage(message);
+						const response = await onMessage(message);
 						ack();
+						return response;
 					},
 					onEnded,
 				);
 			},
-			consumeExpectingConfirmation: async (onMessage: (message: any, ack: () => void, nack: (options?: INackOptions) => void) => Promise<void>, onEnded?: () => void) => {
+			consumeExpectingConfirmation: async (onMessage: (message: any, ack: () => void, nack: (options?: INackOptions) => void) => Promise<any>, onEnded?: () => void) => {
 				const amqplibChannel = options.confirmable
 					? await this.getAmqplibConfirmChannel(amqplibConnection, queueName)
 					: await this.getAmqplibChannel(amqplibConnection, queueName);
