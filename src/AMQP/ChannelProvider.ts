@@ -13,6 +13,7 @@ import IQueueOptions from './IQueueOptions';
 import * as Debug from 'debug';
 const debug = Debug('@signageos/lib:AMQP:ChannelProvider');
 
+const REJECTED_QUEUE_PREFIX = '__rejected.';
 const RESPONSE_QUEUE_PREFIX = '__response.';
 
 export default class ChannelProvider {
@@ -215,7 +216,8 @@ export default class ChannelProvider {
 
 	private async assertRejectableQueue(amqplibChannel: AmqplibChannel, queueName: string) {
 		await amqplibChannel.assertQueue(queueName, {
-			deadLetterExchange: 'rejected'
+			deadLetterExchange: '',
+			deadLetterRoutingKey: REJECTED_QUEUE_PREFIX + queueName,
 		});
 	}
 
