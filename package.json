@@ -21,7 +21,7 @@
     "prebuild": "rm -rf dist/*",
     "prepublish": "yarn run prebuild && yarn run build",
     "release": "yarn version --new-version patch && (npm publish ; git push origin master --tags)",
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "echo \"Warning: no test specified\"",
     "watch": "tsc --watch"
   },
   "author": "Michael Zabka <zabka.michael@gmail.com>",
