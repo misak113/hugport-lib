@@ -8,6 +8,7 @@ const QUEUE_NAME_PREFIX = 'events.';
 const OPTIONS = {
 	persistent: true,
 	confirmable: true,
+	prefetchCount: 1,
 };
 
 export async function enqueue(amqpConnection: IAMQPConnection, event: IEvent<IEventPayload>) {
