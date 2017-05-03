@@ -1,0 +1,22 @@
+image: docker:latest
+
+cache:
+  untracked: true
+  key: "$CI_PROJECT_ID"
+  paths:
+    - node_modules/
+    - .yarn-cache
+
+build:
+  image: $CI_REGISTRY/signageos/docker-yarn:master
+  stage: build
+  script:
+    - export TAG=`node tools/tag-by-branch $CI_COMMIT_REF_NAME`
+    - yarn config set cache-folder .yarn-cache
+    - yarn --tag $TAG
+    - yarn run lint
+    - NODE_ENV=test yarn test
+    - export VERSION=`node tools/version-next-by-branch ${CI_COMMIT_REF_NAME} ${CI_JOB_ID}`
+    - node tools/version-upgrade $VERSION
+    - yarn run prepublish --production
+    - npm publish --ignore-scripts --tag $TAG

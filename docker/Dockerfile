@@ -22,6 +22,8 @@ ENV PORT 8080
 ENV NODE_MODULE_NAME $NODE_MODULE_NAME
 
 COPY . /src
+RUN mv .npmrc.template .npmrc
+RUN mv .yarnrc.template .yarnrc
 RUN envsubst < package.json.template > package.json
 RUN yarn --production --no-lockfile
 
