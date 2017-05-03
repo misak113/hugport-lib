@@ -14,6 +14,7 @@ import INackOptions from './INackOptions';
 import * as Debug from 'debug';
 const debug = Debug('@signageos/lib:AMQP:ChannelProvider');
 
+const DEFAULT_PREFETCH_COUNT = 100;
 const REJECTED_QUEUE_PREFIX = '__rejected.';
 const RESPONSE_QUEUE_PREFIX = '__response.';
 
@@ -90,6 +91,7 @@ export default class ChannelProvider {
 						onEnded = undefined;
 					}
 				});
+				await amqplibChannel.prefetch(options.prefetchCount || DEFAULT_PREFETCH_COUNT);
 				await amqplibChannel.consume(queueName, async (amqplibMessage: AmqplibMessage) => {
 					try {
 						const message = this.decodeMessageBuffer(amqplibMessage.content);
