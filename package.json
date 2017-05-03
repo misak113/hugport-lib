@@ -4,6 +4,7 @@
   "main": "./dist",
   "files": [
     "dist",
+    "docker",
     "libs",
     "tools",
     "README.md",

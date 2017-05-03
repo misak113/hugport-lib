@@ -1,0 +1,8 @@
+{
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "${NODE_MODULE_NAME}": "${NODE_MODULE_VERSION}"
+  }
+}
