@@ -42,7 +42,10 @@ export async function process<TCommandError extends ICommandError<string>>(amqpC
 	);
 }
 
-export async function bindAll(amqpConnection: IAMQPConnection, onCommand: (command: ICommand) => Promise<IResponse<ICommandError<string>> | undefined>) {
+export async function bindAll(
+	amqpConnection: IAMQPConnection,
+	onCommand: (command: ICommand) => Promise<IResponse<ICommandError<string>> | undefined>
+) {
 	const queueName = QUEUE_NAME;
 	await amqpConnection.queueSubscriber.subscribeRepeatable(queueName, onCommand, OPTIONS);
 }

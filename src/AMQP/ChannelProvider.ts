@@ -74,7 +74,14 @@ export default class ChannelProvider {
 					onEnded,
 				);
 			},
-			consumeExpectingConfirmation: async (onMessage: (message: any, ack: () => void, nack: (options?: INackOptions) => void) => Promise<any>, onEnded?: () => void) => {
+			consumeExpectingConfirmation: async (
+				onMessage: (
+					message: any,
+					ack: () => void,
+					nack: (options?: INackOptions) => void
+				) => Promise<any>,
+				onEnded?: () => void
+			) => {
 				const amqplibChannel = options.confirmable
 					? await this.getAmqplibConfirmChannel(amqplibConnection, queueName)
 					: await this.getAmqplibChannel(amqplibConnection, queueName);
@@ -98,10 +105,10 @@ export default class ChannelProvider {
 						const response = await onMessage(
 							message,
 							() => amqplibChannel.ack(amqplibMessage),
-							(options?: INackOptions) => amqplibChannel.nack(
+							(nackOptions?: INackOptions) => amqplibChannel.nack(
 								amqplibMessage,
 								undefined,
-								options ? options.requeue : undefined // default refers to true
+								nackOptions ? nackOptions.requeue : undefined // default refers to true
 							),
 						);
 						if (amqplibMessage.properties.replyTo) {
