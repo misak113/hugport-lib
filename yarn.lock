@@ -466,9 +466,9 @@ tsutils@^1.4.0:
   version "1.7.0"
   resolved "https://npm.hugport.com/tsutils/-/tsutils-1.7.0.tgz#2e63ccc2d6912bb095f7e363ff4100721dc86f50"
 
-typescript@^2.2.2:
-  version "2.2.2"
-  resolved "https://npm.hugport.com/typescript/-/typescript-2.2.2.tgz#606022508479b55ffa368b58fee963a03dfd7b0c"
+typescript@^2.3.2:
+  version "2.3.2"
+  resolved "https://npm.hugport.com/typescript/-/typescript-2.3.2.tgz#f0f045e196f69a72f06b25fd3bd39d01c3ce9984"
 
 user-home@^1.1.1:
   version "1.1.1"
