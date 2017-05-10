@@ -17,6 +17,10 @@
   version "0.0.29"
   resolved "https://npm.hugport.com/@types%2fdebug/-/debug-0.0.29.tgz#a1e514adfbd92f03a224ba54d693111dbf1f3754"
 
+"@types/mocha@^2.2.41":
+  version "2.2.41"
+  resolved "https://npm.hugport.com/@types%2fmocha/-/mocha-2.2.41.tgz#e27cf0817153eb9f2713b2d3f6c68f1e1c3ca608"
+
 "@types/node@*", "@types/node@^7.0.12":
   version "7.0.12"
   resolved "https://npm.hugport.com/@types%2fnode/-/node-7.0.12.tgz#ae5f67a19c15f752148004db07cbbb372e69efc9"
@@ -31,6 +35,10 @@
   dependencies:
     "@types/node" "*"
 
+"@types/should@^8.3.0":
+  version "8.3.0"
+  resolved "https://npm.hugport.com/@types%2fshould/-/should-8.3.0.tgz#e2b460243685dbe377182f39ef38d37f4d157ada"
+
 "@types/spex@^0.0.1":
   version "0.0.1"
   resolved "https://npm.hugport.com/@types%2fspex/-/spex-0.0.1.tgz#52d5278da83f8dc57678c468de56dc35baa10443"
@@ -42,6 +50,10 @@ ansi-regex@^2.0.0:
 ansi-styles@^2.2.1:
   version "2.2.1"
   resolved "https://npm.hugport.com/ansi-styles/-/ansi-styles-2.2.1.tgz#b432dd3358b634cf75e1e4664368240533c1ddbe"
+
+arrify@^1.0.0:
+  version "1.0.1"
+  resolved "https://npm.hugport.com/arrify/-/arrify-1.0.1.tgz#898508da2226f380df904728456849c1501a4b0d"
 
 babel-code-frame@^6.22.0:
   version "6.22.0"
@@ -66,7 +78,7 @@ browser-stdout@1.3.0:
   version "1.3.0"
   resolved "https://registry.yarnpkg.com/browser-stdout/-/browser-stdout-1.3.0.tgz#f351d32969d32fa5d7a5567154263d928ae3bd1f"
 
-chalk@^1.1.0:
+chalk@^1.1.0, chalk@^1.1.1:
   version "1.1.3"
   resolved "https://npm.hugport.com/chalk/-/chalk-1.1.3.tgz#a8115c55e4a702fe4d150abd3872822a7e09fc98"
   dependencies:
@@ -94,11 +106,11 @@ concat-map@0.0.1:
   version "0.0.1"
   resolved "https://registry.yarnpkg.com/concat-map/-/concat-map-0.0.1.tgz#d8a96bd77fd68df7793a73036a3ba0d5405d477b"
 
-debug@2.2.0:
-  version "2.2.0"
-  resolved "https://registry.yarnpkg.com/debug/-/debug-2.2.0.tgz#f87057e995b1a1f6ae6a4960664137bc56f039da"
+debug@2.6.0:
+  version "2.6.0"
+  resolved "https://npm.hugport.com/debug/-/debug-2.6.0.tgz#bc596bcabe7617f11d9fa15361eded5608b8499b"
   dependencies:
-    ms "0.7.1"
+    ms "0.7.2"
 
 debug@^2.6.3:
   version "2.6.3"
@@ -110,11 +122,7 @@ diff@1.0.7:
   version "1.0.7"
   resolved "https://registry.yarnpkg.com/diff/-/diff-1.0.7.tgz#24bbb001c4a7d5522169e7cabdb2c2814ed91cf4"
 
-diff@1.4.0:
-  version "1.4.0"
-  resolved "https://registry.yarnpkg.com/diff/-/diff-1.4.0.tgz#7f28d2eb9ee7b15a97efd89ce63dcfdaa3ccbabf"
-
-diff@^3.2.0:
+diff@3.2.0, diff@^3.1.0, diff@^3.2.0:
   version "3.2.0"
   resolved "https://npm.hugport.com/diff/-/diff-3.2.0.tgz#c9ce393a4b7cbd0b058a725c93df299027868ff9"
 
@@ -140,18 +148,7 @@ generic-pool@^3.1.7:
   version "3.1.7"
   resolved "https://npm.hugport.com/generic-pool/-/generic-pool-3.1.7.tgz#dac22b2c7a7a04e41732f7d8d2d25a303c88f662"
 
-glob@7.0.5:
-  version "7.0.5"
-  resolved "https://registry.yarnpkg.com/glob/-/glob-7.0.5.tgz#b4202a69099bbb4d292a7c1b95b6682b67ebdc95"
-  dependencies:
-    fs.realpath "^1.0.0"
-    inflight "^1.0.4"
-    inherits "2"
-    minimatch "^3.0.2"
-    once "^1.3.0"
-    path-is-absolute "^1.0.0"
-
-glob@^7.1.1:
+glob@7.1.1, glob@^7.1.1:
   version "7.1.1"
   resolved "https://npm.hugport.com/glob/-/glob-7.1.1.tgz#805211df04faaf1c63a3600306cdf5ade50b2ec8"
   dependencies:
@@ -264,6 +261,10 @@ lodash.keys@^3.0.0:
     lodash.isarguments "^3.0.0"
     lodash.isarray "^3.0.0"
 
+make-error@^1.1.1:
+  version "1.2.3"
+  resolved "https://npm.hugport.com/make-error/-/make-error-1.2.3.tgz#6c4402df732e0977ac6faf754a5074b3d2b1d19d"
+
 "minimatch@2 || 3", minimatch@^3.0.2:
   version "3.0.3"
   resolved "https://registry.yarnpkg.com/minimatch/-/minimatch-3.0.3.tgz#2a4e4090b96b2db06a9d7df01055a62a77c9b774"
@@ -274,7 +275,11 @@ minimist@0.0.8, minimist@~0.0.1:
   version "0.0.8"
   resolved "https://registry.yarnpkg.com/minimist/-/minimist-0.0.8.tgz#857fcabfc3397d2625b8228262e86aa7a011b05d"
 
-mkdirp@0.5.1:
+minimist@^1.2.0:
+  version "1.2.0"
+  resolved "https://npm.hugport.com/minimist/-/minimist-1.2.0.tgz#a35008b20f41383eec1fb914f4cd5df79a264284"
+
+mkdirp@0.5.1, mkdirp@^0.5.1:
   version "0.5.1"
   resolved "https://registry.yarnpkg.com/mkdirp/-/mkdirp-0.5.1.tgz#30057438eac6cf7f8c4767f38648d6697d75c903"
   dependencies:
@@ -288,29 +293,29 @@ mocha-jenkins-reporter:
     mkdirp "0.5.1"
     mocha ">=2.0.0"
 
-mocha@>=2.0.0:
-  version "3.1.2"
-  resolved "https://registry.yarnpkg.com/mocha/-/mocha-3.1.2.tgz#51f93b432bf7e1b175ffc22883ccd0be32dba6b5"
+mocha@>=2.0.0, mocha@^3.3.0:
+  version "3.3.0"
+  resolved "https://npm.hugport.com/mocha/-/mocha-3.3.0.tgz#d29b7428d3f52c82e2e65df1ecb7064e1aabbfb5"
   dependencies:
     browser-stdout "1.3.0"
     commander "2.9.0"
-    debug "2.2.0"
-    diff "1.4.0"
+    debug "2.6.0"
+    diff "3.2.0"
     escape-string-regexp "1.0.5"
-    glob "7.0.5"
+    glob "7.1.1"
     growl "1.9.2"
     json3 "3.3.2"
     lodash.create "3.1.1"
     mkdirp "0.5.1"
     supports-color "3.1.2"
 
-ms@0.7.1:
-  version "0.7.1"
-  resolved "https://registry.yarnpkg.com/ms/-/ms-0.7.1.tgz#9cd13c03adbff25b65effde7ce864ee952017098"
-
 ms@0.7.2:
   version "0.7.2"
   resolved "https://npm.hugport.com/ms/-/ms-0.7.2.tgz#ae25cf2512b3885a1d95d7f037868d8431124765"
+
+object-assign@^4.1.1:
+  version "4.1.1"
+  resolved "https://npm.hugport.com/object-assign/-/object-assign-4.1.1.tgz#2109adc7965887cfc05cbbd442cac8bfbb360863"
 
 once@^1.3.0:
   version "1.4.0"
@@ -349,11 +354,67 @@ semver@^5.3.0:
   version "5.3.0"
   resolved "https://npm.hugport.com/semver/-/semver-5.3.0.tgz#9b2ce5d3de02d17c6012ad326aa6b4d0cf54f94f"
 
+should-equal@^1.0.0:
+  version "1.0.1"
+  resolved "https://npm.hugport.com/should-equal/-/should-equal-1.0.1.tgz#0b6e9516f2601a9fb0bb2dcc369afa1c7e200af7"
+  dependencies:
+    should-type "^1.0.0"
+
+should-format@^3.0.2:
+  version "3.0.3"
+  resolved "https://npm.hugport.com/should-format/-/should-format-3.0.3.tgz#9bfc8f74fa39205c53d38c34d717303e277124f1"
+  dependencies:
+    should-type "^1.3.0"
+    should-type-adaptors "^1.0.1"
+
+should-type-adaptors@^1.0.1:
+  version "1.0.1"
+  resolved "https://npm.hugport.com/should-type-adaptors/-/should-type-adaptors-1.0.1.tgz#efe5553cdf68cff66e5c5f51b712dc351c77beaa"
+  dependencies:
+    should-type "^1.3.0"
+    should-util "^1.0.0"
+
+should-type@^1.0.0, should-type@^1.3.0, should-type@^1.4.0:
+  version "1.4.0"
+  resolved "https://npm.hugport.com/should-type/-/should-type-1.4.0.tgz#0756d8ce846dfd09843a6947719dfa0d4cff5cf3"
+
+should-util@^1.0.0:
+  version "1.0.0"
+  resolved "https://npm.hugport.com/should-util/-/should-util-1.0.0.tgz#c98cda374aa6b190df8ba87c9889c2b4db620063"
+
+should@^11.2.1:
+  version "11.2.1"
+  resolved "https://npm.hugport.com/should/-/should-11.2.1.tgz#90f55145552d01cfc200666e4e818a1c9670eda2"
+  dependencies:
+    should-equal "^1.0.0"
+    should-format "^3.0.2"
+    should-type "^1.4.0"
+    should-type-adaptors "^1.0.1"
+    should-util "^1.0.0"
+
+source-map-support@^0.4.0:
+  version "0.4.15"
+  resolved "https://npm.hugport.com/source-map-support/-/source-map-support-0.4.15.tgz#03202df65c06d2bd8c7ec2362a193056fef8d3b1"
+  dependencies:
+    source-map "^0.5.6"
+
+source-map@^0.5.6:
+  version "0.5.6"
+  resolved "https://npm.hugport.com/source-map/-/source-map-0.5.6.tgz#75ce38f52bf0733c5a7f0c118d81334a2bb5f412"
+
 strip-ansi@^3.0.0:
   version "3.0.1"
   resolved "https://npm.hugport.com/strip-ansi/-/strip-ansi-3.0.1.tgz#6a385fb8853d952d5ff05d0e8aaf94278dc63dcf"
   dependencies:
     ansi-regex "^2.0.0"
+
+strip-bom@^3.0.0:
+  version "3.0.0"
+  resolved "https://npm.hugport.com/strip-bom/-/strip-bom-3.0.0.tgz#2334c18e9c759f7bdd56fdef7e9ae3d588e68ed3"
+
+strip-json-comments@^2.0.0:
+  version "2.0.1"
+  resolved "https://npm.hugport.com/strip-json-comments/-/strip-json-comments-2.0.1.tgz#3c531942e908c2697c0ec344858c286c7ca0a60a"
 
 supports-color@3.1.2:
   version "3.1.2"
@@ -364,6 +425,28 @@ supports-color@3.1.2:
 supports-color@^2.0.0:
   version "2.0.0"
   resolved "https://npm.hugport.com/supports-color/-/supports-color-2.0.0.tgz#535d045ce6b6363fa40117084629995e9df324c7"
+
+ts-node@^3.0.4:
+  version "3.0.4"
+  resolved "https://npm.hugport.com/ts-node/-/ts-node-3.0.4.tgz#a1475ebf24fd4e2ee2fba8b1aa1605b977bde506"
+  dependencies:
+    arrify "^1.0.0"
+    chalk "^1.1.1"
+    diff "^3.1.0"
+    make-error "^1.1.1"
+    minimist "^1.2.0"
+    mkdirp "^0.5.1"
+    source-map-support "^0.4.0"
+    tsconfig "^6.0.0"
+    v8flags "^2.0.11"
+    yn "^1.2.0"
+
+tsconfig@^6.0.0:
+  version "6.0.0"
+  resolved "https://npm.hugport.com/tsconfig/-/tsconfig-6.0.0.tgz#6b0e8376003d7af1864f8df8f89dd0059ffcd032"
+  dependencies:
+    strip-bom "^3.0.0"
+    strip-json-comments "^2.0.0"
 
 tslint@^5.1.0:
   version "5.1.0"
@@ -387,6 +470,16 @@ typescript@^2.2.2:
   version "2.2.2"
   resolved "https://npm.hugport.com/typescript/-/typescript-2.2.2.tgz#606022508479b55ffa368b58fee963a03dfd7b0c"
 
+user-home@^1.1.1:
+  version "1.1.1"
+  resolved "https://npm.hugport.com/user-home/-/user-home-1.1.1.tgz#2b5be23a32b63a7c9deb8d0f28d485724a3df190"
+
+v8flags@^2.0.11:
+  version "2.1.1"
+  resolved "https://npm.hugport.com/v8flags/-/v8flags-2.1.1.tgz#aab1a1fa30d45f88dd321148875ac02c0b55e5b4"
+  dependencies:
+    user-home "^1.1.1"
+
 wordwrap@~0.0.2:
   version "0.0.3"
   resolved "https://npm.hugport.com/wordwrap/-/wordwrap-0.0.3.tgz#a3d5da6cd5c0bc0008d37234bbaf1bed63059107"
@@ -394,3 +487,9 @@ wordwrap@~0.0.2:
 wrappy@1:
   version "1.0.2"
   resolved "https://registry.yarnpkg.com/wrappy/-/wrappy-1.0.2.tgz#b5243d8f3ec1aa35f1364605bc0d1036e30ab69f"
+
+yn@^1.2.0:
+  version "1.3.0"
+  resolved "https://npm.hugport.com/yn/-/yn-1.3.0.tgz#1b0812abb8d805d48966f8df385dc9dacc9a19d8"
+  dependencies:
+    object-assign "^4.1.1"
