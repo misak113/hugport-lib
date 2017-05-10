@@ -1,6 +1,7 @@
 
 import { IAMQPConnection } from '../amqpConnectionFactory';
-import ICommand from './ICommand';
+import fetchNextMessage from '../fetchNextMessage';
+import ICommand, { ICommandPayload } from './ICommand';
 import ICommandError from './ICommandError';
 
 const QUEUE_NAME = 'commands';
@@ -50,10 +51,14 @@ export async function bindAll(
 	await amqpConnection.queueSubscriber.subscribeRepeatable(queueName, onCommand, OPTIONS);
 }
 
+export async function fetchNext<TPayload extends ICommandPayload>(
+	amqpConnection: IAMQPConnection,
+): Promise<ICommand<TPayload> | null> {
+	const queueName = QUEUE_NAME;
+	return await fetchNextMessage<ICommand<TPayload> | null>(amqpConnection, queueName);
+}
+
 export async function purgeAll(amqpConnection: IAMQPConnection) {
-	const amqplibConnection = await amqpConnection.pool.acquire();
-	const channel = await amqplibConnection.createChannel();
-	await channel.purgeQueue('commands');
-	await channel.close();
-	await amqpConnection.pool.release(amqplibConnection);
+	/* tslint:disable-next-line */
+	while (await fetchNext(amqpConnection));
 }
