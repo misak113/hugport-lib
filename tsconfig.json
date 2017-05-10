@@ -18,7 +18,8 @@
             "node_modules/@types/"
         ]
     },
-    "filesGlob": [
-        "src/**/*.tsx?"
+    "include": [
+        "src/**/*.ts",
+        "src/**/*.tsx"
     ]
 }

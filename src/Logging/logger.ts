@@ -1,3 +1,4 @@
+/// <reference path="../../libs/raven/raven-node.d.ts" />
 
 import * as Raven from 'raven';
 
