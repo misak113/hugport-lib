@@ -49,3 +49,11 @@ export async function bindAll(
 	const queueName = QUEUE_NAME;
 	await amqpConnection.queueSubscriber.subscribeRepeatable(queueName, onCommand, OPTIONS);
 }
+
+export async function purgeAll(amqpConnection: IAMQPConnection) {
+	const amqplibConnection = await amqpConnection.pool.acquire();
+	const channel = await amqplibConnection.createChannel();
+	await channel.purgeQueue('commands');
+	await channel.close();
+	await amqpConnection.pool.release(amqplibConnection);
+}

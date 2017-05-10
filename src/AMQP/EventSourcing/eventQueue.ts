@@ -51,3 +51,10 @@ export async function bindOneExpectingConfirmation<TPayload extends IEventPayloa
 	const queueName = QUEUE_NAME_PREFIX + eventType;
 	await amqpConnection.queueSubscriber.subscribeExpectingConfirmationRepeatable(queueName, onEvent, OPTIONS);
 }
+
+export async function purgeMore(amqpConnection: IAMQPConnection, eventTypes: string[]) {
+	for (let eventType of eventTypes) {
+		/* tslint:disable-next-line */
+		while (await fetchNext(amqpConnection, eventType));
+	}
+}
