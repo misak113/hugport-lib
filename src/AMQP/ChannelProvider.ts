@@ -65,7 +65,7 @@ export default class ChannelProvider {
 				return await responsePromise;
 			},
 			consume: async (onMessage: (message: any) => Promise<any>, onEnded?: () => void) => {
-				await channel.consumeExpectingConfirmation(
+				return await channel.consumeExpectingConfirmation(
 					async (message: any, ack: () => void) => {
 						const response = await onMessage(message);
 						ack();
@@ -99,7 +99,7 @@ export default class ChannelProvider {
 					}
 				});
 				await amqplibChannel.prefetch(options.prefetchCount || DEFAULT_PREFETCH_COUNT);
-				await amqplibChannel.consume(queueName, async (amqplibMessage: AmqplibMessage) => {
+				const { consumerTag } = await amqplibChannel.consume(queueName, async (amqplibMessage: AmqplibMessage) => {
 					try {
 						const message = this.decodeMessageBuffer(amqplibMessage.content);
 						const response = await onMessage(
@@ -127,6 +127,9 @@ export default class ChannelProvider {
 						throw error;
 					}
 				});
+				return async () => {
+					await amqplibChannel.cancel(consumerTag);
+				};
 			},
 		};
 		return channel;

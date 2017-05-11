@@ -3,6 +3,7 @@ import IArrayStorage from '../Storage/IArrayStorage';
 import IUnsubscribedMessage from './IUnsubscribedMessage';
 import IQueueOptions from './IQueueOptions';
 import ChannelProvider from './ChannelProvider';
+import { ICancelConsumption } from './IChannel';
 import INackOptions from './INackOptions';
 import * as Debug from 'debug';
 const debug = Debug('@signageos/lib:AMQP:QueueSubscriber');
@@ -23,25 +24,28 @@ export default class QueuePublisher {
 		onMessage: (message: TMessage) => Promise<TResponseMessage>,
 		options: IQueueOptions = {},
 		onEnded?: () => void
-	) {
+	): Promise<ICancelConsumption> {
 		const channel = await this.channelProvider.getChannel(queueName, options);
-		await channel.consume(onMessage, onEnded);
+		const cancelConsumption = await channel.consume(onMessage, onEnded);
 		debug('Messages subscribed: %s', queueName);
+		return cancelConsumption;
 	}
 
 	public async subscribeRepeatable<TMessage, TResponseMessage>(
 		queueName: string,
 		onMessage: (message: TMessage) => Promise<TResponseMessage>,
 		options: IQueueOptions = {},
-	) {
+	): Promise<ICancelConsumption> {
 		try {
-			await this.subscribe(queueName, onMessage, options, async () => {
-				await this.repeateSubscription(queueName, onMessage, options, false);
+			let cancelConsumption = await this.subscribe(queueName, onMessage, options, async () => {
+				// TODO it does not cancel consumption during repeating
+				cancelConsumption = await this.repeateSubscription(queueName, onMessage, options, false);
 			});
 			debug('Messages subscribed: %s', queueName);
+			return () => cancelConsumption();
 		} catch (error) {
 			debug('Error during subscribe repeatable: %s', queueName, error);
-			await this.repeateSubscription(queueName, onMessage, options, false);
+			return await this.repeateSubscription(queueName, onMessage, options, false);
 		}
 	}
 
@@ -50,25 +54,28 @@ export default class QueuePublisher {
 		onMessage: (message: TMessage, ack: () => void, nack: (options?: INackOptions) => void) => Promise<TResponseMessage>,
 		options: IQueueOptions = {},
 		onEnded?: () => void
-	) {
+	): Promise<ICancelConsumption> {
 		const channel = await this.channelProvider.getChannel(queueName, options);
-		await channel.consumeExpectingConfirmation(onMessage, onEnded);
+		const cancelConsumption = await channel.consumeExpectingConfirmation(onMessage, onEnded);
 		debug('Messages subscribed expecting confirmation: %s', queueName);
+		return cancelConsumption;
 	}
 
 	public async subscribeExpectingConfirmationRepeatable<TMessage, TResponseMessage>(
 		queueName: string,
 		onMessage: (message: TMessage, ack: () => void, nack: (options?: INackOptions) => void) => Promise<TResponseMessage>,
 		options: IQueueOptions = {},
-	) {
+	): Promise<ICancelConsumption> {
 		try {
-			await this.subscribeExpectingConfirmation(queueName, onMessage, options, async () => {
-				await this.repeateSubscription(queueName, onMessage, options, true);
+			let cancelConsumption = await this.subscribeExpectingConfirmation(queueName, onMessage, options, async () => {
+				// TODO it does not cancel consumption during repeating
+				cancelConsumption = await this.repeateSubscription(queueName, onMessage, options, true);
 			});
 			debug('Messages subscribed expecting confirmation: %s', queueName);
+			return () => cancelConsumption();
 		} catch (error) {
 			debug('Error during subscribe expecting confirmation repeatable: %s', queueName, error);
-			await this.repeateSubscription(queueName, onMessage, options, true);
+			return await this.repeateSubscription(queueName, onMessage, options, true);
 		}
 	}
 
@@ -78,7 +85,7 @@ export default class QueuePublisher {
 		options: IQueueOptions,
 		confirmationWaiting: boolean,
 	) {
-		return new Promise((resolve: () => void) => {
+		return new Promise((resolve: (cancelConsumption: ICancelConsumption) => void) => {
 			this.unsubscribedMessageStorage.push({ queueName, onMessage, options, resolve, confirmationWaiting });
 			this.tryResubscribeAfterTimeout();
 		});
@@ -90,16 +97,17 @@ export default class QueuePublisher {
 			if (unqueuedMessage) {
 				const { queueName, onMessage, options, resolve, confirmationWaiting } = unqueuedMessage;
 				try {
+					let cancelConsumption: ICancelConsumption;
 					if (!confirmationWaiting) {
-						await this.subscribe(queueName, onMessage, options, async () => {
+						cancelConsumption = await this.subscribe(queueName, onMessage, options, async () => {
 							await this.repeateSubscription(queueName, onMessage, options, confirmationWaiting);
 						});
 					} else {
-						await this.subscribeExpectingConfirmation(queueName, onMessage, options, async () => {
+						cancelConsumption = await this.subscribeExpectingConfirmation(queueName, onMessage, options, async () => {
 							await this.repeateSubscription(queueName, onMessage, options, confirmationWaiting);
 						});
 					}
-					resolve();
+					resolve(cancelConsumption);
 				} catch (error) {
 					debug('Error during subscribe from storage: %s', queueName, error);
 					this.unsubscribedMessageStorage.unshift(unqueuedMessage);
