@@ -40,7 +40,7 @@ export async function bindOne<TPayload extends IEventPayload>(
 	onEvent: (event: IEvent<TPayload>) => Promise<void>
 ) {
 	const queueName = QUEUE_NAME_PREFIX + eventType;
-	await amqpConnection.queueSubscriber.subscribeRepeatable(queueName, onEvent, OPTIONS);
+	return await amqpConnection.queueSubscriber.subscribeRepeatable(queueName, onEvent, OPTIONS);
 }
 
 export async function bindOneExpectingConfirmation<TPayload extends IEventPayload>(
@@ -49,7 +49,7 @@ export async function bindOneExpectingConfirmation<TPayload extends IEventPayloa
 	onEvent: (event: IEvent<TPayload>, ack: () => void, nack: (options?: INackOptions) => void) => Promise<void>
 ) {
 	const queueName = QUEUE_NAME_PREFIX + eventType;
-	await amqpConnection.queueSubscriber.subscribeExpectingConfirmationRepeatable(queueName, onEvent, OPTIONS);
+	return await amqpConnection.queueSubscriber.subscribeExpectingConfirmationRepeatable(queueName, onEvent, OPTIONS);
 }
 
 export async function purgeMore(amqpConnection: IAMQPConnection, eventTypes: string[]) {
