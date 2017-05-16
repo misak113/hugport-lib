@@ -48,7 +48,7 @@ export async function bindAll(
 	onCommand: (command: ICommand) => Promise<IResponse<ICommandError<string>> | undefined>
 ) {
 	const queueName = QUEUE_NAME;
-	await amqpConnection.queueSubscriber.subscribeRepeatable(queueName, onCommand, OPTIONS);
+	return await amqpConnection.queueSubscriber.subscribeRepeatable(queueName, onCommand, OPTIONS);
 }
 
 export async function fetchNext<TPayload extends ICommandPayload>(
