@@ -2,6 +2,7 @@
 import { Message } from 'amqplib';
 import { IAMQPConnection } from './amqpConnectionFactory';
 import { assertRejectableQueue } from './queueConfigurator';
+import { deserializeJSON } from '../JSON/jsonHelper';
 
 export default async function fetchNextMessage<TMessage>(
 	amqpConnection: IAMQPConnection,
@@ -17,7 +18,7 @@ export default async function fetchNextMessage<TMessage>(
 		const message: Message | boolean = await channel.get(queueName, { noAck: true });
 		await amqpConnection.pool.release(connection);
 		if (message && typeof message !== 'boolean') {
-			return message.content ? JSON.parse(message.content.toString()) : null;
+			return message.content ? JSON.parse(message.content.toString(), deserializeJSON) : null;
 		} else {
 			return null;
 		}

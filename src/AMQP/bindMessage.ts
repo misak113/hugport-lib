@@ -1,5 +1,6 @@
 
 import wait from '../Timer/wait';
+import { deserializeJSON } from '../JSON/jsonHelper';
 import { Message } from 'amqplib';
 import { IAMQPConnection } from './amqpConnectionFactory';
 import { assertRejectableQueue } from './queueConfigurator';
@@ -58,7 +59,7 @@ export async function bindMessage<TMessage>(
 	await assertRejectableQueue(channel, queueName);
 	await channel.consume(queueName, async (amqpMessage: Message) => {
 		try {
-			const message = JSON.parse(amqpMessage.content.toString());
+			const message = JSON.parse(amqpMessage.content.toString(), deserializeJSON);
 			await onMessage(message);
 			channel.ack(amqpMessage);
 		} catch (error) {

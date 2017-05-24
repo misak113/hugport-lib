@@ -7,6 +7,7 @@ import {
 	Options as AmqplibOptions,
 } from 'amqplib';
 import { generateUniqueHash } from '../Hash/generator';
+import { deserializeJSON } from '../JSON/jsonHelper';
 import IChannel from './IChannel';
 import IAMQPPool from './IAMQPPool';
 import IQueueOptions from './IQueueOptions';
@@ -142,7 +143,7 @@ export default class ChannelProvider {
 	}
 
 	private decodeMessageBuffer(encodedMessageBuffer?: Buffer) {
-		return encodedMessageBuffer ? JSON.parse(encodedMessageBuffer.toString()) : null;
+		return encodedMessageBuffer ? JSON.parse(encodedMessageBuffer.toString(), deserializeJSON) : null;
 	}
 
 	private encodeMessageIntoBuffer(message: any) {
