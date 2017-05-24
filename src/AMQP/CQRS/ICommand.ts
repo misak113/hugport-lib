@@ -1,13 +1,13 @@
-
-export interface ICommandPayload {
-	type: string;
+export interface ICommandPayload<TType extends string> {
+	type: TType;
 }
 
-interface ICommand<TPayload extends ICommandPayload = ICommandPayload> {
+interface ICommand<TType extends string, TPayload extends ICommandPayload<TType> = ICommandPayload<TType>> {
 	id: string | null;
-	type: string;
+	type: TType;
 	sourceUid: string;
 	receivedAt: Date;
 	payload: TPayload;
 }
+
 export default ICommand;
