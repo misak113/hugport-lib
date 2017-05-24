@@ -1,4 +1,3 @@
-
 import { IAMQPConnection } from '../amqpConnectionFactory';
 import fetchNextMessage from '../fetchNextMessage';
 import ICommand, { ICommandPayload } from './ICommand';
@@ -10,16 +9,25 @@ const OPTIONS = {
 	confirmable: true,
 };
 
-export type IResponse<TCommandError extends ICommandError<string>> = IProcessSucceed | IProcessFailed<TCommandError> | IError;
+export type IResponse<
+	TCommandType extends string = string,
+	TCommandError extends ICommandError<string> = ICommandError<string>,
+> = IProcessSucceed<TCommandType>
+	| IProcessFailed<TCommandType, TCommandError>
+	| IError;
 
-export interface IProcessSucceed {
+export interface IProcessSucceed<TCommandType extends string> {
 	status: 'process_succeed';
-	command: ICommand;
+	command: ICommand<TCommandType>;
 }
 
-export interface IProcessFailed<TCommandError extends ICommandError<string>> {
+export interface IProcessFailed<
+	TCommandType extends string,
+	TCommandError extends ICommandError<string>,
+/* tslint:disable-next-line */
+> {
 	status: 'process_failed';
-	command: ICommand;
+	command: ICommand<TCommandType>;
 	message: string;
 	error: TCommandError;
 }
@@ -29,33 +37,36 @@ export interface IError {
 	error: any;
 }
 
-export async function enqueue(amqpConnection: IAMQPConnection, command: ICommand) {
+export async function enqueue<TCommandType extends string>(amqpConnection: IAMQPConnection, command: ICommand<TCommandType>) {
 	const queueName = QUEUE_NAME;
 	await amqpConnection.queuePublisher.enqueueRepeatable(queueName, command, OPTIONS);
 }
 
-export async function process<TCommandError extends ICommandError<string>>(amqpConnection: IAMQPConnection, command: ICommand) {
+export async function process<TType extends string, TCommandError extends ICommandError<string>>(
+	amqpConnection: IAMQPConnection,
+	command: ICommand<TType>,
+) {
 	const queueName = QUEUE_NAME;
-	return await amqpConnection.queuePublisher.enqueueExpectingResponseRepeatable<ICommand, IResponse<TCommandError>>(
+	return await amqpConnection.queuePublisher.enqueueExpectingResponseRepeatable<ICommand<TType>, IResponse<TType, TCommandError>>(
 		queueName,
 		command,
-		OPTIONS
+		OPTIONS,
 	);
 }
 
-export async function bindAll(
+export async function bindAll<TCommandType extends string>(
 	amqpConnection: IAMQPConnection,
-	onCommand: (command: ICommand) => Promise<IResponse<ICommandError<string>> | undefined>
+	onCommand: (command: ICommand<TCommandType>) => Promise<IResponse<TCommandType, ICommandError<string>> | undefined>,
 ) {
 	const queueName = QUEUE_NAME;
 	return await amqpConnection.queueSubscriber.subscribeRepeatable(queueName, onCommand, OPTIONS);
 }
 
-export async function fetchNext<TPayload extends ICommandPayload>(
+export async function fetchNext<TCommandType extends string, TPayload extends ICommandPayload<TCommandType>>(
 	amqpConnection: IAMQPConnection,
-): Promise<ICommand<TPayload> | null> {
+): Promise<ICommand<TCommandType, TPayload> | null> {
 	const queueName = QUEUE_NAME;
-	return await fetchNextMessage<ICommand<TPayload> | null>(amqpConnection, queueName);
+	return await fetchNextMessage<ICommand<TCommandType, TPayload> | null>(amqpConnection, queueName);
 }
 
 export async function purgeAll(amqpConnection: IAMQPConnection) {
