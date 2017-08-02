@@ -34,12 +34,13 @@ export async function enqueueMessage<TMessage>(
 	message: TMessage,
 	options: {
 		priority?: number;
+		maxPriority?: number;
 	} = {},
 ) {
 	const connection = await amqpConnection.pool.acquire(options.priority);
 	try {
 		const channel = await connection.createConfirmChannel();
-		await assertRejectableQueue(channel, queueName);
+		await assertRejectableQueue(channel, queueName, options.maxPriority);
 		await new Promise((resolve: () => void, reject: (error: Error) => void) => channel.sendToQueue(
 			queueName,
 			new Buffer(JSON.stringify(message)),

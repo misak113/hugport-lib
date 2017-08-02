@@ -9,12 +9,13 @@ export default async function fetchNextMessage<TMessage>(
 	queueName: string,
 	options: {
 		priority?: number;
+		maxPriority?: number;
 	} = {},
 ): Promise<TMessage | null> {
 	const connection = await amqpConnection.pool.acquire(options.priority);
 	try {
 		const channel = await connection.createConfirmChannel();
-		await assertRejectableQueue(channel, queueName);
+		await assertRejectableQueue(channel, queueName, options.maxPriority);
 		const message: Message | boolean = await channel.get(queueName, { noAck: true });
 		await amqpConnection.pool.release(connection);
 		if (message && typeof message !== 'boolean') {

@@ -38,6 +38,7 @@ export async function bindMessage<TMessage>(
 	onMessage: (message: TMessage) => Promise<void>,
 	options: {
 		priority?: number;
+		maxPriority?: number;
 	} = {},
 	onEnded?: () => void,
 ) {
@@ -56,7 +57,7 @@ export async function bindMessage<TMessage>(
 			onEnded = undefined;
 		}
 	});
-	await assertRejectableQueue(channel, queueName);
+	await assertRejectableQueue(channel, queueName, options.maxPriority);
 	await channel.consume(queueName, async (amqpMessage: Message) => {
 		try {
 			const message = JSON.parse(amqpMessage.content.toString(), deserializeJSON);

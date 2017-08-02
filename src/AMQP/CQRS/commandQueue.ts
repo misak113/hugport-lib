@@ -77,7 +77,7 @@ export async function fetchNext<TCommandType extends string, TPayload extends IC
 	amqpConnection: IAMQPConnection,
 ): Promise<ICommand<TCommandType, TPayload> | null> {
 	const queueName = QUEUE_NAME;
-	return await fetchNextMessage<ICommand<TCommandType, TPayload> | null>(amqpConnection, queueName);
+	return await fetchNextMessage<ICommand<TCommandType, TPayload> | null>(amqpConnection, queueName, { maxPriority: OPTIONS.maxPriority });
 }
 
 export async function purgeAll(amqpConnection: IAMQPConnection) {
