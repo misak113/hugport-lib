@@ -11,6 +11,7 @@ import { deserializeJSON } from '../JSON/jsonHelper';
 import IChannel from './IChannel';
 import IAMQPPool from './IAMQPPool';
 import IQueueOptions from './IQueueOptions';
+import IMessageOptions from './IMessageOptions';
 import INackOptions from './INackOptions';
 import * as Debug from 'debug';
 const debug = Debug('@signageos/lib:AMQP:ChannelProvider');
@@ -33,18 +34,18 @@ export default class ChannelProvider {
 	public async getChannel(queueName: string, options: IQueueOptions = {}): Promise<IChannel<any>> {
 		const amqplibConnection = await this.getAmqplibConnection();
 		const channel = {
-			send: async (message: any) => {
+			send: async (message: any, messageOptions: IMessageOptions = {}) => {
 				const encodedMessageBuffer = this.encodeMessageIntoBuffer(message);
-				const amqplibSendOptions = this.createAmqplibSendOptions(options);
+				const amqplibSendOptions = this.createAmqplibSendOptions(options, messageOptions);
 				await this.sendToQueue(amqplibConnection, queueName, encodedMessageBuffer, amqplibSendOptions, options);
 			},
-			sendExpectingResponse: async <TResponseMessage>(message: any) => {
+			sendExpectingResponse: async <TResponseMessage>(message: any, messageOptions: IMessageOptions = {}) => {
 				const encodedMessageBuffer = this.encodeMessageIntoBuffer(message);
 				const responseQueueName = RESPONSE_QUEUE_PREFIX + queueName;
 				const amqplibResponseChannel = await this.getAmqplibResponseChannel(amqplibConnection, responseQueueName);
 				const correlationId = generateUniqueHash();
 				const amqplibSendOptions: AmqplibOptions.Publish = {
-					...this.createAmqplibSendOptions(options),
+					...this.createAmqplibSendOptions(options, messageOptions),
 					correlationId,
 					replyTo: responseQueueName,
 				};
@@ -84,8 +85,8 @@ export default class ChannelProvider {
 				onEnded?: () => void
 			) => {
 				const amqplibChannel = options.confirmable
-					? await this.getAmqplibConfirmChannel(amqplibConnection, queueName)
-					: await this.getAmqplibChannel(amqplibConnection, queueName);
+					? await this.getAmqplibConfirmChannel(amqplibConnection, queueName, options.maxPriority)
+					: await this.getAmqplibChannel(amqplibConnection, queueName, options.maxPriority);
 				amqplibChannel.once('error', (error:  Error) => {
 					if (onEnded) {
 						onEnded();
@@ -136,9 +137,10 @@ export default class ChannelProvider {
 		return channel;
 	}
 
-	private createAmqplibSendOptions(options: IQueueOptions) {
+	private createAmqplibSendOptions(options: IQueueOptions, messageOptions: IMessageOptions) {
 		return {
 			persistent: options.persistent,
+			priority: messageOptions.priority,
 		};
 	}
 
@@ -158,7 +160,7 @@ export default class ChannelProvider {
 		options: IQueueOptions,
 	) {
 		if (options.confirmable) {
-			const amqplibChannel = await this.getAmqplibConfirmChannel(amqplibConnection, queueName);
+			const amqplibChannel = await this.getAmqplibConfirmChannel(amqplibConnection, queueName, options.maxPriority);
 			await new Promise((resolve: () => void, reject: (error: Error) => void) => amqplibChannel.sendToQueue(
 				queueName,
 				encodedMessageBuffer,
@@ -166,7 +168,7 @@ export default class ChannelProvider {
 				(error: Error) => error !== null ? reject(error) : resolve(),
 			));
 		} else {
-			const amqplibChannel = await this.getAmqplibChannel(amqplibConnection, queueName);
+			const amqplibChannel = await this.getAmqplibChannel(amqplibConnection, queueName, options.maxPriority);
 			amqplibChannel.sendToQueue(
 				queueName,
 				encodedMessageBuffer,
@@ -178,10 +180,11 @@ export default class ChannelProvider {
 	private async getAmqplibChannel(
 		amqplibConnection: AmqplibConnection,
 		queueName: string,
+		maxPriority: number | undefined,
 	): Promise<AmqplibChannel> {
 		return await this.getOrCreateAmqplibChannel('not_confirm-' + queueName, async () => {
 			const amqplibChannel = await amqplibConnection.createChannel();
-			await this.assertRejectableQueue(amqplibChannel, queueName);
+			await this.assertRejectableQueue(amqplibChannel, queueName, maxPriority);
 			return amqplibChannel;
 		});
 	}
@@ -189,10 +192,11 @@ export default class ChannelProvider {
 	private async getAmqplibConfirmChannel(
 		amqplibConnection: AmqplibConnection,
 		queueName: string,
+		maxPriority: number | undefined,
 	): Promise<AmqplibConfirmChannel> {
 		return await this.getOrCreateAmqplibChannel('confirm-' + queueName, async () => {
 			const amqplibChannel = await amqplibConnection.createConfirmChannel();
-			await this.assertRejectableQueue(amqplibChannel, queueName);
+			await this.assertRejectableQueue(amqplibChannel, queueName, maxPriority);
 			return amqplibChannel;
 		});
 	}
@@ -233,10 +237,11 @@ export default class ChannelProvider {
 		}
 	}
 
-	private async assertRejectableQueue(amqplibChannel: AmqplibChannel, queueName: string) {
+	private async assertRejectableQueue(amqplibChannel: AmqplibChannel, queueName: string, maxPriority: number | undefined) {
 		await amqplibChannel.assertQueue(queueName, {
 			deadLetterExchange: '',
 			deadLetterRoutingKey: REJECTED_QUEUE_PREFIX + queueName,
+			maxPriority,
 		});
 	}
 

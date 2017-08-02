@@ -7,7 +7,12 @@ const QUEUE_NAME = 'commands';
 const OPTIONS = {
 	persistent: true,
 	confirmable: true,
+	maxPriority: 10,
 };
+
+export interface IMessageOptions {
+	priority?: number;
+}
 
 export type IResponse<
 	TCommandType extends string = string,
@@ -37,20 +42,26 @@ export interface IError {
 	error: any;
 }
 
-export async function enqueue<TCommandType extends string>(amqpConnection: IAMQPConnection, command: ICommand<TCommandType>) {
+export async function enqueue<TCommandType extends string>(
+	amqpConnection: IAMQPConnection,
+	command: ICommand<TCommandType>,
+	messageOptions: IMessageOptions = { priority: 5 },
+) {
 	const queueName = QUEUE_NAME;
-	await amqpConnection.queuePublisher.enqueueRepeatable(queueName, command, OPTIONS);
+	await amqpConnection.queuePublisher.enqueueRepeatable(queueName, command, OPTIONS, messageOptions);
 }
 
 export async function process<TType extends string, TCommandError extends ICommandError<string>>(
 	amqpConnection: IAMQPConnection,
 	command: ICommand<TType>,
+	messageOptions: IMessageOptions = { priority: 6 },
 ) {
 	const queueName = QUEUE_NAME;
 	return await amqpConnection.queuePublisher.enqueueExpectingResponseRepeatable<ICommand<TType>, IResponse<TType, TCommandError>>(
 		queueName,
 		command,
 		OPTIONS,
+		messageOptions,
 	);
 }
 
