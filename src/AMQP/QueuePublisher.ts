@@ -2,6 +2,7 @@
 import IArrayStorage from '../Storage/IArrayStorage';
 import IUnqueuedMessage from './IUnqueuedMessage';
 import IQueueOptions from './IQueueOptions';
+import IMessageOptions from './IMessageOptions';
 import ChannelProvider from './ChannelProvider';
 import * as Debug from 'debug';
 const debug = Debug('@signageos/lib:AMQP:QueuePublisher');
@@ -21,9 +22,10 @@ export default class QueuePublisher {
 		queueName: string,
 		message: TMessage,
 		options?: IQueueOptions,
+		messageOptions: IMessageOptions = {},
 	) {
 		const channel = await this.channelProvider.getChannel(queueName, options);
-		await channel.send(message);
+		await channel.send(message, messageOptions);
 		debug('Message enqueued: %s', queueName, message);
 	}
 
@@ -31,13 +33,14 @@ export default class QueuePublisher {
 		queueName: string,
 		message: TMessage,
 		options?: IQueueOptions,
+		messasgeOptions: IMessageOptions = {},
 	) {
 		try {
-			await this.enqueue(queueName, message, options);
+			await this.enqueue(queueName, message, options, messasgeOptions);
 		} catch (error) {
 			debug('Error during enqueue repeatable: %s', queueName, message, error);
 			await new Promise((resolve: () => void) => {
-				this.unqueuedMessageStorage.push({ queueName, message, options, resolve, responseWaiting: false });
+				this.unqueuedMessageStorage.push({ queueName, message, options, messasgeOptions, resolve, responseWaiting: false });
 				this.tryReenqueueAfterTimeout();
 			});
 		}
@@ -47,9 +50,10 @@ export default class QueuePublisher {
 		queueName: string,
 		message: TMessage,
 		options?: IQueueOptions,
+		messasgeOptions: IMessageOptions = {},
 	): Promise<TResponseMessage> {
 		const channel = await this.channelProvider.getChannel(queueName, options);
-		const response = await channel.sendExpectingResponse<TResponseMessage>(message);
+		const response = await channel.sendExpectingResponse<TResponseMessage>(message, messasgeOptions);
 		debug('Message enqueued: %s', queueName, message);
 		return response;
 	}
@@ -58,13 +62,14 @@ export default class QueuePublisher {
 		queueName: string,
 		message: TMessage,
 		options?: IQueueOptions,
+		messasgeOptions: IMessageOptions = {},
 	): Promise<TResponseMessage> {
 		try {
-			return await this.enqueueExpectingResponse<TMessage, TResponseMessage>(queueName, message, options);
+			return await this.enqueueExpectingResponse<TMessage, TResponseMessage>(queueName, message, options, messasgeOptions);
 		} catch (error) {
 			debug('Error during enqueue repeatable: %s', queueName, message, error);
 			return await new Promise((resolve: (response: TResponseMessage) => void) => {
-				this.unqueuedMessageStorage.push({ queueName, message, options, resolve, responseWaiting: true });
+				this.unqueuedMessageStorage.push({ queueName, message, options, messasgeOptions, resolve, responseWaiting: true });
 				this.tryReenqueueAfterTimeout();
 			});
 		}
@@ -74,13 +79,13 @@ export default class QueuePublisher {
 		while (true) {
 			const unqueuedMessage = this.unqueuedMessageStorage.shift();
 			if (unqueuedMessage) {
-				const { queueName, message, options, resolve, responseWaiting } = unqueuedMessage;
+				const { queueName, message, options, messasgeOptions, resolve, responseWaiting } = unqueuedMessage;
 				try {
 					if (responseWaiting) {
-						const response = await this.enqueueExpectingResponse(queueName, message, options);
+						const response = await this.enqueueExpectingResponse(queueName, message, options, messasgeOptions);
 						resolve(response);
 					} else {
-						await this.enqueue(queueName, message, options);
+						await this.enqueue(queueName, message, options, messasgeOptions);
 						resolve();
 					}
 				} catch (error) {
