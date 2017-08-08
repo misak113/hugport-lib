@@ -45,7 +45,7 @@ export function createRethinkDBConnection(rethinkDsn: string): IRethinkDBConnect
 	const options = {
 		priorityRange: 3,
 		min: 1,
-		max: 100,
+		max: 10e3,
 		autostart: false,
 		testOnBorrow: true,
 		acquireTimeoutMillis: 1e3,
