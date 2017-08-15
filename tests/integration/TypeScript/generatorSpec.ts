@@ -12,10 +12,11 @@ describe('TypeScript.generator', () => {
 			should.strictEqual(
 				tsFileContent,
 				`
+import { WeAreFuckedAction as WeAreFuckedAction_6065a } from './We/Are/Fucked/weAreFuckedAction';
 import { WeAction as WeAction_91017 } from './We/weActions';
 import { MyAction as MyAction_abbcc } from './firstActions';
 import { YourAction as YourAction_abbcc } from './firstActions';
-type IAllTypes = WeAction_91017 | MyAction_abbcc | YourAction_abbcc;
+type IAllTypes = WeAreFuckedAction_6065a | WeAction_91017 | MyAction_abbcc | YourAction_abbcc;
 export default IAllTypes;
 `,
 			);
