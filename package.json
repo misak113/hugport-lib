@@ -36,7 +36,8 @@
     "amqp10": "~3.5.0",
     "mocha": "^3.1.2",
     "pg-promise": "^5.3.3",
-    "raven-js": "^3.12.1"
+    "raven-js": "^3.12.1",
+    "redis": "^2.8.0"
   },
   "publishConfig": {
     "registry": "https://npm.hugport.com",
@@ -48,6 +49,7 @@
     "@types/mocha": "^2.2.41",
     "@types/node": "^7.0.12",
     "@types/pg-promise": "^0.0.29",
+    "@types/redis": "^2.6.0",
     "@types/rethinkdb": "^2.3.2",
     "@types/should": "^8.3.0",
     "@types/spex": "^0.0.1",

@@ -29,6 +29,12 @@
   version "0.0.29"
   resolved "https://npm.hugport.com/@types%2fpg-promise/-/pg-promise-0.0.29.tgz#40a94f5076a17cca315324e209754cbc0f29d73b"
 
+"@types/redis@^2.6.0":
+  version "2.6.0"
+  resolved "https://npm.hugport.com/@types%2fredis/-/redis-2.6.0.tgz#7f01fdec1ba353e9ce7e8439807a43de61760c53"
+  dependencies:
+    "@types/node" "*"
+
 "@types/rethinkdb@^2.3.2":
   version "2.3.2"
   resolved "https://npm.hugport.com/@types%2frethinkdb/-/rethinkdb-2.3.2.tgz#f5cb0521d1daf63495b34557375978c0f793ec16"
