@@ -8,7 +8,9 @@ cache:
     - .yarn-cache
 
 build:
-  image: $CI_REGISTRY/signageos/docker-yarn:master
+  except:
+    - tags
+  image: $CI_REGISTRY/signageos/docker-yarn:git
   stage: build
   script:
     - export TAG=`node tools/tag-by-branch $CI_COMMIT_REF_NAME`
@@ -20,3 +22,8 @@ build:
     - node tools/version-upgrade $VERSION
     - yarn run prepublish --production
     - npm publish --ignore-scripts --tag $TAG
+    - git config user.email "$GITLAB_USER_EMAIL"
+    - git config user.name "$GITLAB_USER_EMAIL"
+    - git remote set-url origin ${CI_REPOSITORY_URL/"gitlab-ci-token:$CI_JOB_TOKEN"/"$CI_REPOSITORY_PUSH_USERNAME:$CI_REPOSITORY_PUSH_TOKEN"}
+    - git tag v${VERSION} -a -m "$(git log --pretty="%s" `git describe --abbrev=0 --tags`...HEAD)"
+    - git push --tags
