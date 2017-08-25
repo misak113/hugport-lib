@@ -21,6 +21,7 @@ build:
     - export VERSION=`node tools/version-next-by-branch ${CI_COMMIT_REF_NAME} ${CI_JOB_ID}`
     - node tools/version-upgrade $VERSION
     - yarn run prepublish --production
+    - npm set ${NPM_REGISTRY_URL/#*:/}:_authToken=$NPM_AUTH_TOKEN
     - npm publish --ignore-scripts --tag $TAG
     - git config user.email "$GITLAB_USER_EMAIL"
     - git config user.name "$GITLAB_USER_EMAIL"
