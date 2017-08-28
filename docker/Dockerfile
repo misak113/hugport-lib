@@ -19,6 +19,7 @@ RUN yarn --production --no-lockfile
 RUN rm -rf /tmp/* /root/.yarn-cache /root/.node-gyp
 
 ENV NPM_AUTH_TOKEN "-"
+ENV NPM_REGISTRY_URL "-"
 
 EXPOSE $PORT
 CMD ["yarn", "start"]
