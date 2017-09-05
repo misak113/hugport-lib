@@ -23,7 +23,7 @@ RUN npm config delete registry
 RUN npm config delete $(echo $NPM_REGISTRY_URL | sed 's/^https://'):_authToken
 
 # cleanup
-RUN npm cache clear \
+RUN npm cache clear --force \
 	&& apk del gettext \
 	&& rm -rf /tmp/*
 
