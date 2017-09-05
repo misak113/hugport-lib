@@ -1,0 +1,30 @@
+FROM registry.gitlab.com/signageos/docker-node:8.4.0-alpine
+
+WORKDIR /src
+
+ARG NPM_AUTH_TOKEN
+ARG NPM_REGISTRY_URL
+ARG NODE_MODULE_NAME
+ARG NODE_MODULE_VERSION
+
+ENV PORT 8080
+ENV NODE_MODULE_NAME $NODE_MODULE_NAME
+
+COPY . /src
+RUN npm config set registry $NPM_REGISTRY_URL
+RUN npm config set $(echo $NPM_REGISTRY_URL | sed 's/^https://'):_authToken=$NPM_AUTH_TOKEN
+
+RUN envsubst < package.json.template > package.json
+RUN npm install --production --no-package-lock
+
+RUN npm config delete registry
+RUN npm config delete $(echo $NPM_REGISTRY_URL | sed 's/^https://'):_authToken
+
+# cleanup
+RUN npm cache clear
+
+ENV NPM_AUTH_TOKEN "-"
+ENV NPM_REGISTRY_URL "-"
+
+EXPOSE $PORT
+CMD ["npm", "start"]
