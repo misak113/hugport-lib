@@ -13,13 +13,12 @@ ENV NODE_MODULE_NAME $NODE_MODULE_NAME
 RUN apk add --no-cache --update gettext
 
 COPY . /src
-RUN npm config set registry $NPM_REGISTRY_URL
 RUN npm config set $(echo $NPM_REGISTRY_URL | sed 's/^https://'):_authToken=$NPM_AUTH_TOKEN
 
+RUN mv .npmrc.template .npmrc
 RUN envsubst < package.json.template > package.json
 RUN npm install --production --no-package-lock
 
-RUN npm config delete registry
 RUN npm config delete $(echo $NPM_REGISTRY_URL | sed 's/^https://'):_authToken
 
 # cleanup
