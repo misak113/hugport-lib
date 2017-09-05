@@ -10,6 +10,8 @@ ARG NODE_MODULE_VERSION
 ENV PORT 8080
 ENV NODE_MODULE_NAME $NODE_MODULE_NAME
 
+RUN apk add --no-cache --update gettext
+
 COPY . /src
 RUN npm config set registry $NPM_REGISTRY_URL
 RUN npm config set $(echo $NPM_REGISTRY_URL | sed 's/^https://'):_authToken=$NPM_AUTH_TOKEN
@@ -21,7 +23,9 @@ RUN npm config delete registry
 RUN npm config delete $(echo $NPM_REGISTRY_URL | sed 's/^https://'):_authToken
 
 # cleanup
-RUN npm cache clear
+RUN npm cache clear \
+	apk del gettext \
+	rm -rf /tmp/*
 
 ENV NPM_AUTH_TOKEN "-"
 ENV NPM_REGISTRY_URL "-"
