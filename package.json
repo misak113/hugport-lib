@@ -5,6 +5,7 @@
   "files": [
     "dist",
     "docker",
+    "docker-node",
     "libs",
     "tools",
     "README.md",
