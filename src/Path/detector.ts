@@ -7,7 +7,7 @@ export function detectModuleRootPath(moduleName: string, deepLimit: number = 10)
 	for (let i = 0; i < deepLimit; i++) {
 		const packagePath = path.join(basePath, 'package.json');
 		if (fs.existsSync(packagePath) && require(packagePath).name === moduleName) {
-			return basePath;
+			return path.resolve(basePath);
 		}
 		basePath = path.join(basePath, '..');
 	}
