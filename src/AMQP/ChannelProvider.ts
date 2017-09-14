@@ -18,7 +18,7 @@ const debug = Debug('@signageos/lib:AMQP:ChannelProvider');
 
 const DEFAULT_PREFETCH_COUNT = 100;
 const REJECTED_QUEUE_PREFIX = '__rejected.';
-const RESPONSE_QUEUE_PREFIX = '__response.';
+const RESPONSE_QUEUE_PREFIX = '___response.';
 
 export default class ChannelProvider {
 
@@ -212,7 +212,6 @@ export default class ChannelProvider {
 			const amqplibChannel = await amqplibConnection.createChannel();
 			await amqplibChannel.assertQueue(queueName, {
 				durable: false,
-				autoDelete: true,
 			});
 			return amqplibChannel;
 		});
