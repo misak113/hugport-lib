@@ -51,17 +51,20 @@ export default class ChannelProvider {
 				};
 				const sentPromise = this.sendToQueue(amqplibConnection, queueName, encodedMessageBuffer, amqplibSendOptions, options);
 				const responsePromise = new Promise(
-					(resolve: (responseMessage: TResponseMessage) => void) => amqplibResponseChannel.consume(
-						responseQueueName,
-						(amqplibResponseMessage: AmqplibMessage) => {
-							if (amqplibResponseMessage.properties.correlationId === correlationId) {
-								resolve(this.decodeMessageBuffer(amqplibResponseMessage.content));
-								amqplibResponseChannel.ack(amqplibResponseMessage);
-							} else {
-								amqplibResponseChannel.nack(amqplibResponseMessage);
-							}
-						},
-					)
+					async (resolve: (responseMessage: TResponseMessage) => void) => {
+						const { consumerTag } = await amqplibResponseChannel.consume(
+							responseQueueName,
+							(amqplibResponseMessage: AmqplibMessage) => {
+								if (amqplibResponseMessage.properties.correlationId === correlationId) {
+									resolve(this.decodeMessageBuffer(amqplibResponseMessage.content));
+									amqplibResponseChannel.ack(amqplibResponseMessage);
+									amqplibResponseChannel.cancel(consumerTag);
+								} else {
+									amqplibResponseChannel.nack(amqplibResponseMessage);
+								}
+							},
+						);
+					}
 				);
 				await sentPromise;
 				return await responsePromise;
