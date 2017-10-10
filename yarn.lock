@@ -21,6 +21,12 @@
   version "2.2.41"
   resolved "https://npm.hugport.com/@types%2fmocha/-/mocha-2.2.41.tgz#e27cf0817153eb9f2713b2d3f6c68f1e1c3ca608"
 
+"@types/moment@^2.13.0":
+  version "2.13.0"
+  resolved "https://npm.hugport.com/@types%2fmoment/-/moment-2.13.0.tgz#604ebd189bc3bc34a1548689404e61a2a4aac896"
+  dependencies:
+    moment "*"
+
 "@types/node@*", "@types/node@^7.0.12":
   version "7.0.12"
   resolved "https://npm.hugport.com/@types%2fnode/-/node-7.0.12.tgz#ae5f67a19c15f752148004db07cbbb372e69efc9"
@@ -314,6 +320,10 @@ mocha@>=2.0.0, mocha@^3.3.0:
     lodash.create "3.1.1"
     mkdirp "0.5.1"
     supports-color "3.1.2"
+
+moment@*, moment@^2.19.0:
+  version "2.19.0"
+  resolved "https://npm.hugport.com/moment/-/moment-2.19.0.tgz#44f675ef6b944942762581b1c179fb679e599d67"
 
 ms@0.7.2:
   version "0.7.2"
