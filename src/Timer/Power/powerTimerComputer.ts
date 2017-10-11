@@ -18,9 +18,12 @@ export function shouldBeOnByTimers(allSettings: { [type: string]: PowerTimerSett
 	}
 	const sortedTimerEvents = orderTimerEventsByChronology(timerEvents);
 	const lastTimerEvent = [...sortedTimerEvents].reverse().find(
-		(timerEvent: ITimerEvent) =>
-			timerEvent.weekDayNumber <= now.getDay()
-			&& timeToSeconds(timerEvent.time) <= timeToSeconds(moment(now).format('HH:mm:ss'))
+		(timerEvent: ITimerEvent) => {
+			const inNextDay = timerEvent.weekDayNumber < now.getDay();
+			const isThisDay = timerEvent.weekDayNumber === now.getDay();
+			const isOnTime = timeToSeconds(timerEvent.time) <= timeToSeconds(moment(now).format('HH:mm:ss'));
+			return inNextDay || (isThisDay && isOnTime);
+		}
 	);
 	return lastTimerEvent ? lastTimerEvent.type === 'ON' : [...sortedTimerEvents].reverse()[0].type === 'ON';
 }

@@ -409,6 +409,72 @@ describe('Timer.Power.powerTimerComputer', function () {
 
 			assert.ok(!shouldBeOnByTimers(timerSettings, moment(sun + 'T23:59:59').toDate()));
 		});
+
+		it('should works when timer is over one or more days', function () {
+			const skipDayTimerSettings: { [type: string]: TimerSettings } = {
+				TIMER_1: {
+					...dummyTimerSettings,
+					type: 'TIMER_1',
+					timeOn: '08:00:00',
+					timeOff: '18:00:00',
+					sun: true,
+					mon: false,
+					tue: true,
+					wed: false,
+					thu: true,
+					fri: false,
+					sat: false,
+				} as TimerSettings,
+			};
+
+			// OFF from sat
+			assert.ok(!shouldBeOnByTimers(skipDayTimerSettings, moment(sun + 'T00:00:00').toDate()));
+			assert.ok(shouldBeOnByTimers(skipDayTimerSettings, moment(sun + 'T08:00:00').toDate()));
+			assert.ok(!shouldBeOnByTimers(skipDayTimerSettings, moment(sun + 'T18:00:00').toDate()));
+
+			assert.ok(!shouldBeOnByTimers(skipDayTimerSettings, moment(mon + 'T07:59:59').toDate()));
+			assert.ok(!shouldBeOnByTimers(skipDayTimerSettings, moment(mon + 'T08:00:00').toDate()));
+			assert.ok(!shouldBeOnByTimers(skipDayTimerSettings, moment(mon + 'T08:00:01').toDate()));
+			assert.ok(!shouldBeOnByTimers(skipDayTimerSettings, moment(mon + 'T17:59:59').toDate()));
+			assert.ok(!shouldBeOnByTimers(skipDayTimerSettings, moment(mon + 'T18:00:00').toDate()));
+			assert.ok(!shouldBeOnByTimers(skipDayTimerSettings, moment(mon + 'T18:00:01').toDate()));
+
+			assert.ok(!shouldBeOnByTimers(skipDayTimerSettings, moment(tue + 'T07:59:59').toDate()));
+			assert.ok(shouldBeOnByTimers(skipDayTimerSettings, moment(tue + 'T08:00:00').toDate()));
+			assert.ok(shouldBeOnByTimers(skipDayTimerSettings, moment(tue + 'T08:00:01').toDate()));
+			assert.ok(shouldBeOnByTimers(skipDayTimerSettings, moment(tue + 'T17:59:59').toDate()));
+			assert.ok(!shouldBeOnByTimers(skipDayTimerSettings, moment(tue + 'T18:00:00').toDate()));
+			assert.ok(!shouldBeOnByTimers(skipDayTimerSettings, moment(tue + 'T18:00:01').toDate()));
+
+			assert.ok(!shouldBeOnByTimers(skipDayTimerSettings, moment(wed + 'T07:59:59').toDate()));
+			assert.ok(!shouldBeOnByTimers(skipDayTimerSettings, moment(wed + 'T08:00:00').toDate()));
+			assert.ok(!shouldBeOnByTimers(skipDayTimerSettings, moment(wed + 'T08:00:01').toDate()));
+			assert.ok(!shouldBeOnByTimers(skipDayTimerSettings, moment(wed + 'T17:59:59').toDate()));
+			assert.ok(!shouldBeOnByTimers(skipDayTimerSettings, moment(wed + 'T18:00:00').toDate()));
+			assert.ok(!shouldBeOnByTimers(skipDayTimerSettings, moment(wed + 'T18:00:01').toDate()));
+
+			assert.ok(!shouldBeOnByTimers(skipDayTimerSettings, moment(thu + 'T07:59:59').toDate()));
+			assert.ok(shouldBeOnByTimers(skipDayTimerSettings, moment(thu + 'T08:00:00').toDate()));
+			assert.ok(shouldBeOnByTimers(skipDayTimerSettings, moment(thu + 'T08:00:01').toDate()));
+			assert.ok(shouldBeOnByTimers(skipDayTimerSettings, moment(thu + 'T17:59:59').toDate()));
+			assert.ok(!shouldBeOnByTimers(skipDayTimerSettings, moment(thu + 'T18:00:00').toDate()));
+			assert.ok(!shouldBeOnByTimers(skipDayTimerSettings, moment(thu + 'T18:00:01').toDate()));
+
+			assert.ok(!shouldBeOnByTimers(skipDayTimerSettings, moment(fri + 'T07:59:59').toDate()));
+			assert.ok(!shouldBeOnByTimers(skipDayTimerSettings, moment(fri + 'T08:00:00').toDate()));
+			assert.ok(!shouldBeOnByTimers(skipDayTimerSettings, moment(fri + 'T08:00:01').toDate()));
+			assert.ok(!shouldBeOnByTimers(skipDayTimerSettings, moment(fri + 'T17:59:59').toDate()));
+			assert.ok(!shouldBeOnByTimers(skipDayTimerSettings, moment(fri + 'T18:00:00').toDate()));
+			assert.ok(!shouldBeOnByTimers(skipDayTimerSettings, moment(fri + 'T18:00:01').toDate()));
+
+			assert.ok(!shouldBeOnByTimers(skipDayTimerSettings, moment(sat + 'T07:59:59').toDate()));
+			assert.ok(!shouldBeOnByTimers(skipDayTimerSettings, moment(sat + 'T08:00:00').toDate()));
+			assert.ok(!shouldBeOnByTimers(skipDayTimerSettings, moment(sat + 'T08:00:01').toDate()));
+			assert.ok(!shouldBeOnByTimers(skipDayTimerSettings, moment(sat + 'T17:59:59').toDate()));
+			assert.ok(!shouldBeOnByTimers(skipDayTimerSettings, moment(sat + 'T18:00:00').toDate()));
+			assert.ok(!shouldBeOnByTimers(skipDayTimerSettings, moment(sat + 'T18:00:01').toDate()));
+		});
+
 	});
 
 });
