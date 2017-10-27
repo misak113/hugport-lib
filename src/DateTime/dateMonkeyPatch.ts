@@ -84,16 +84,37 @@ export function overrideDateCurrentTimestampInMinutesByAsync<TGlobal extends { D
 	updatingInterval: number = 10e3 // in milliseconds
 ) {
 	let lastCurrentTimestamp: number;
-	let updatedAtMinutes: number = 0;
+	let updatedAt: number = 0;
+	let incremented: boolean = false;
 	const OriginalDate: DateConstructor = overrideDateCurrentTimestamp(
 		root,
-		() => lastCurrentTimestamp
-			+ (Math.floor(OriginalDate.now() / 60e3) - updatedAtMinutes) * 60e3 // last update based on seconds
-			+ OriginalDate.now() % 60e3, // keep ms from internal clock
+		() => {
+			const millisecondsSinceLastUpdate = OriginalDate.now() - updatedAt;
+			return lastCurrentTimestamp
+				+ (incremented ? -1 : 0)
+				+ millisecondsSinceLastUpdate;
+		}
 	);
 	const updateCurrentTimestamp = async () => {
-		lastCurrentTimestamp = await getCurrentTimestampMinutes() * 60e3;
-		updatedAtMinutes = Math.floor(OriginalDate.now() / 60e3);
+		const newCurrentTimestamp = await getCurrentTimestampMinutes() * 60e3;
+		const minutesDifference = newCurrentTimestamp - lastCurrentTimestamp;
+
+		if (minutesDifference === 1) {
+			incremented = true;
+		}
+
+		const millisecondsSinceLastUpdate = OriginalDate.now() - updatedAt;
+		if (incremented && millisecondsSinceLastUpdate >= 60e3) {
+			incremented = false;
+			updatedAt = updatedAt - 60e3;
+		}
+
+		if (minutesDifference < 0 || minutesDifference > 1) {
+			incremented = false;
+			updatedAt = OriginalDate.now();
+		}
+
+		lastCurrentTimestamp = newCurrentTimestamp;
 	};
 	setInterval(updateCurrentTimestamp, updatingInterval);
 	updateCurrentTimestamp();
