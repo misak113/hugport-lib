@@ -77,3 +77,25 @@ export function overrideDateCurrentTimestampInSecondsByAsync<TGlobal extends { D
 	updateCurrentTimestamp();
 	return OriginalDate;
 }
+
+export function overrideDateCurrentTimestampInMinutesByAsync<TGlobal extends { Date: DateConstructor }>(
+	root: TGlobal,
+	getCurrentTimestampMinutes: () => Promise<number>, // in minutes
+	updatingInterval: number = 10e3 // in milliseconds
+) {
+	let lastCurrentTimestamp: number;
+	let updatedAtMinutes: number = 0;
+	const OriginalDate: DateConstructor = overrideDateCurrentTimestamp(
+		root,
+		() => lastCurrentTimestamp
+			+ (Math.floor(OriginalDate.now() / 60e3) - updatedAtMinutes) * 60e3 // last update based on seconds
+			+ OriginalDate.now() % 60e3, // keep ms from internal clock
+	);
+	const updateCurrentTimestamp = async () => {
+		lastCurrentTimestamp = await getCurrentTimestampMinutes() * 60e3;
+		updatedAtMinutes = Math.floor(OriginalDate.now() / 60e3);
+	};
+	setInterval(updateCurrentTimestamp, updatingInterval);
+	updateCurrentTimestamp();
+	return OriginalDate;
+}
