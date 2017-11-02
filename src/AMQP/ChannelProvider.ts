@@ -52,6 +52,7 @@ export default class ChannelProvider {
 				const sentPromise = this.sendToQueue(amqplibConnection, queueName, encodedMessageBuffer, amqplibSendOptions, options);
 				const responsePromise = new Promise(
 					async (resolve: (responseMessage: TResponseMessage) => void) => {
+						await amqplibResponseChannel.prefetch(1);
 						const { consumerTag } = await amqplibResponseChannel.consume(
 							responseQueueName,
 							(amqplibResponseMessage: AmqplibMessage) => {
