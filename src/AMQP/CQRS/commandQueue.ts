@@ -23,6 +23,7 @@ export type IResponse<
 
 export interface IProcessSucceed<TCommandType extends string> {
 	status: 'process_succeed';
+	dispatchedAt: Date;
 	command: ICommand<TCommandType>;
 }
 
@@ -32,6 +33,7 @@ export interface IProcessFailed<
 /* tslint:disable-next-line */
 > {
 	status: 'process_failed';
+	dispatchedAt: Date;
 	command: ICommand<TCommandType>;
 	message: string;
 	error: TCommandError;
@@ -39,6 +41,7 @@ export interface IProcessFailed<
 
 export interface IError {
 	status: 'error';
+	dispatchedAt: Date;
 	error: any;
 }
 
