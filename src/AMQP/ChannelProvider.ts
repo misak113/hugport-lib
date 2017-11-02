@@ -17,8 +17,8 @@ import * as Debug from 'debug';
 const debug = Debug('@signageos/lib:AMQP:ChannelProvider');
 
 const DEFAULT_PREFETCH_COUNT = 100;
-const REJECTED_QUEUE_PREFIX = '__rejected.';
-const RESPONSE_QUEUE_PREFIX = '___response.';
+export const REJECTED_QUEUE_PREFIX = '__rejected.';
+export const RESPONSE_QUEUE_PREFIX = '___response.';
 
 export default class ChannelProvider {
 
@@ -140,19 +140,57 @@ export default class ChannelProvider {
 		return channel;
 	}
 
+	public decodeMessageBuffer(encodedMessageBuffer?: Buffer) {
+		return encodedMessageBuffer ? JSON.parse(encodedMessageBuffer.toString(), deserializeJSON) : null;
+	}
+
+	public encodeMessageIntoBuffer(message: any) {
+		return new Buffer(JSON.stringify(message));
+	}
+
+	public async getAmqplibResponseChannel(
+		amqplibConnection: AmqplibConnection,
+		queueName: string,
+	): Promise<AmqplibChannel> {
+		return await this.getOrCreateAmqplibChannel('response-' + queueName, async () => {
+			const amqplibChannel = await amqplibConnection.createChannel();
+			await amqplibChannel.assertQueue(queueName, {
+				durable: false,
+			});
+			return amqplibChannel;
+		});
+	}
+
+	public async getAmqplibConnection() {
+		if (this.amqplibConnection) {
+			return this.amqplibConnection;
+		} else {
+			debug('Create connection');
+			const amqplibConnection = await this.amqpPool.acquire();
+			if (this.amqplibConnection) {
+				// if more connections are created in same time then use the first created
+				debug('Release useless connection');
+				this.amqpPool.release(amqplibConnection);
+				return this.amqplibConnection;
+			} else {
+				debug('Created connection');
+				this.amqplibConnection = amqplibConnection;
+				amqplibConnection.on('close', () => {
+					debug('Closed connection');
+					this.amqplibConnection = undefined;
+					this.amqplibChannnelMap = {};
+					this.amqpPool.destroy(amqplibConnection);
+				});
+				return amqplibConnection;
+			}
+		}
+	}
+
 	private createAmqplibSendOptions(options: IQueueOptions, messageOptions: IMessageOptions) {
 		return {
 			persistent: options.persistent,
 			priority: messageOptions.priority,
 		};
-	}
-
-	private decodeMessageBuffer(encodedMessageBuffer?: Buffer) {
-		return encodedMessageBuffer ? JSON.parse(encodedMessageBuffer.toString(), deserializeJSON) : null;
-	}
-
-	private encodeMessageIntoBuffer(message: any) {
-		return new Buffer(JSON.stringify(message));
 	}
 
 	private async sendToQueue(
@@ -204,19 +242,6 @@ export default class ChannelProvider {
 		});
 	}
 
-	private async getAmqplibResponseChannel(
-		amqplibConnection: AmqplibConnection,
-		queueName: string,
-	): Promise<AmqplibChannel> {
-		return await this.getOrCreateAmqplibChannel('response-' + queueName, async () => {
-			const amqplibChannel = await amqplibConnection.createChannel();
-			await amqplibChannel.assertQueue(queueName, {
-				durable: false,
-			});
-			return amqplibChannel;
-		});
-	}
-
 	private async getOrCreateAmqplibChannel<TAmqplibChannel extends AmqplibChannel>(
 		queueIdentifier: string,
 		createChannel: () => Promise<TAmqplibChannel>,
@@ -245,30 +270,5 @@ export default class ChannelProvider {
 			deadLetterRoutingKey: REJECTED_QUEUE_PREFIX + queueName,
 			maxPriority,
 		});
-	}
-
-	private async getAmqplibConnection() {
-		if (this.amqplibConnection) {
-			return this.amqplibConnection;
-		} else {
-			debug('Create connection');
-			const amqplibConnection = await this.amqpPool.acquire();
-			if (this.amqplibConnection) {
-				// if more connections are created in same time then use the first created
-				debug('Release useless connection');
-				this.amqpPool.release(amqplibConnection);
-				return this.amqplibConnection;
-			} else {
-				debug('Created connection');
-				this.amqplibConnection = amqplibConnection;
-				amqplibConnection.on('close', () => {
-					debug('Closed connection');
-					this.amqplibConnection = undefined;
-					this.amqplibChannnelMap = {};
-					this.amqpPool.destroy(amqplibConnection);
-				});
-				return amqplibConnection;
-			}
-		}
 	}
 }

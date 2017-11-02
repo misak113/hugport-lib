@@ -3,7 +3,7 @@ import fetchNextMessage from '../fetchNextMessage';
 import ICommand, { ICommandPayload } from './ICommand';
 import ICommandError from './ICommandError';
 
-const QUEUE_NAME = 'commands';
+export const QUEUE_NAME = 'commands';
 const OPTIONS = {
 	persistent: true,
 	confirmable: true,
