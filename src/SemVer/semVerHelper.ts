@@ -1,5 +1,6 @@
 
 import SemVerLevel from './SemVerLevel';
+import { padLeft } from '../String/pad';
 
 export function getUpgradedVersion(version: string, level: SemVerLevel) {
 	const versionParts = version.split('.');
@@ -34,11 +35,15 @@ export function normalize(version: string) {
 	return versionParts.join('.');
 }
 
+export function normalizeString(version: string) {
+	return padLeft(numerize(version).toString(), 5 * 3, '0');
+}
+
 export function numerize(version: string) {
 	const versionParts = version.split('.');
 	return versionParts.reduce(
 		(numerized: number, versionPart: string, index: number) =>
-			numerized + parseInt(versionPart) * Math.pow(1e6, versionParts.length - index - 1),
+			numerized + parseInt(versionPart) * Math.pow(1e5, versionParts.length - index - 1),
 		0,
 	);
 }

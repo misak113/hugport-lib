@@ -5,6 +5,7 @@ import {
 	sortFunction,
 	normalize,
 	numerize,
+	normalizeString,
 	isGreaterThan,
 } from '../../../src/SemVer/semVerHelper';
 import SemVerLevel from '../../../src/SemVer/SemVerLevel';
@@ -40,9 +41,19 @@ describe('SemVer.semVerHelper', () => {
 
 		it('should create numeric representation of version', () => {
 			should(numerize('0.0.1')).equal(1);
-			should(numerize('0.1.1')).equal(1000001);
-			should(numerize('1.1.1')).equal(1000001000001);
-			should(numerize('23.45.33')).equal(23000045000033);
+			should(numerize('0.1.1')).equal(100001);
+			should(numerize('1.1.1')).equal(10000100001);
+			should(numerize('23.45.33')).equal(230004500033);
+		});
+	});
+
+	describe('normalizeString', () => {
+
+		it('should create normalized representation of version useful for indexing', () => {
+			should(normalizeString('0.0.1')).equal('000000000000001');
+			should(normalizeString('0.1.1')).equal('000000000100001');
+			should(normalizeString('1.1.1')).equal('000010000100001');
+			should(normalizeString('23.45.33')).equal('000230004500033');
 		});
 	});
 
