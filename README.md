@@ -1,3 +1,3 @@
-# Hugport Library
+# General Library
 
-Shared code accross all hugport services
+Shared code accross all services
