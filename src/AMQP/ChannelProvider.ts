@@ -18,7 +18,7 @@ const debug = Debug('@signageos/lib:AMQP:ChannelProvider');
 
 const DEFAULT_PREFETCH_COUNT = 100;
 export const REJECTED_QUEUE_PREFIX = '__rejected.';
-export const RESPONSE_QUEUE_PREFIX = '___response.';
+export const RESPONSE_QUEUE_PREFIX = '__response.';
 
 export default class ChannelProvider {
 
@@ -41,7 +41,7 @@ export default class ChannelProvider {
 			},
 			sendExpectingResponse: async <TResponseMessage>(message: any, messageOptions: IMessageOptions = {}) => {
 				const encodedMessageBuffer = this.encodeMessageIntoBuffer(message);
-				const responseQueueName = RESPONSE_QUEUE_PREFIX + queueName;
+				const responseQueueName = RESPONSE_QUEUE_PREFIX + queueName + '_' + generateUniqueHash(8);
 				const amqplibResponseChannel = await this.getAmqplibResponseChannel(amqplibConnection, responseQueueName);
 				const correlationId = generateUniqueHash();
 				const amqplibSendOptions: AmqplibOptions.Publish = {
@@ -157,6 +157,7 @@ export default class ChannelProvider {
 			const amqplibChannel = await amqplibConnection.createChannel();
 			await amqplibChannel.assertQueue(queueName, {
 				durable: false,
+				autoDelete: true,
 			});
 			return amqplibChannel;
 		});
