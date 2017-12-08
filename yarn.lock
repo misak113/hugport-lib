@@ -615,6 +615,10 @@ text-encoding@^0.6.4:
   version "0.6.4"
   resolved "https://npm.hugport.com/text-encoding/-/text-encoding-0.6.4.tgz#e399a982257a276dae428bb92845cb71bdc26d19"
 
+timeout-ts@0.6.0:
+  version "0.6.0"
+  resolved "https://npm.hugport.com/timeout-ts/-/timeout-ts-0.6.0.tgz#9f92e78cbd380e985cf5316be1be367b0bdd4e39"
+
 tmp@^0.0.33:
   version "0.0.33"
   resolved "https://npm.hugport.com/tmp/-/tmp-0.0.33.tgz#6d34335889768d21b2bcda0aa277ced3b1bfadf9"
