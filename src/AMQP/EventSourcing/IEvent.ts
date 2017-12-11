@@ -8,6 +8,7 @@ interface IEvent<TPayload extends IEventPayload> {
 	commandId: string;
 	type: string;
 	sourceUid: string;
+	dispatchedAt: Date;
 	receivedAt: Date;
 	payload: TPayload;
 }
