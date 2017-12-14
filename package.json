@@ -34,6 +34,7 @@
     "generic-pool": "^3.1.7",
     "mocha-jenkins-reporter": "^0.2.6",
     "moment": "^2.19.0",
+    "semver": "^5.4.1",
     "tar": "^4.1.1",
     "timeout-ts": "0.6.0",
     "tmp": "^0.0.33"
@@ -59,6 +60,7 @@
     "@types/pg-promise": "^0.0.29",
     "@types/redis": "^2.6.0",
     "@types/rethinkdb": "^2.3.2",
+    "@types/semver": "^5.4.0",
     "@types/should": "^8.3.0",
     "@types/sinon": "^2.3.7",
     "@types/spex": "^0.0.1",

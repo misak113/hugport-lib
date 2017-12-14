@@ -1,6 +1,7 @@
 
 import SemVerLevel from './SemVerLevel';
 import { padLeft } from '../String/pad';
+import * as semver from 'semver';
 
 export function getUpgradedVersion(version: string, level: SemVerLevel) {
 	const versionParts = version.split('.');
@@ -12,7 +13,7 @@ export function getUpgradedVersion(version: string, level: SemVerLevel) {
 }
 
 export function sortFunction(a: string, b: string) {
-	return numerize(normalize(a)) - numerize(normalize(b));
+	return semver.compare(normalize(a), normalize(b));
 }
 
 export function isGreaterThan(subject: string, compareWith: string) {
@@ -20,7 +21,8 @@ export function isGreaterThan(subject: string, compareWith: string) {
 }
 
 export function normalize(version: string) {
-	const versionParts = (version + '').split('.');
+	const [mainVersion, ...restVersionParts] = version.toString().split('-');
+	const versionParts = mainVersion.split('.');
 	do {
 		if (versionParts.length > 3) {
 			versionParts.pop();
@@ -32,7 +34,7 @@ export function normalize(version: string) {
 	for (let index in versionParts) {
 		versionParts[index] = isNaN(parseInt(versionParts[index])) ? '0' : parseInt(versionParts[index]).toString();
 	}
-	return versionParts.join('.');
+	return [versionParts.join('.'), ...restVersionParts].join('-');
 }
 
 export function normalizeString(version: string) {
