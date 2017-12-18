@@ -1,9 +1,12 @@
 
+import * as _ from 'lodash';
 import wait from '../Timer/wait';
 import { deserializeJSON } from '../JSON/jsonHelper';
 import { Message } from 'amqplib';
 import { IAMQPConnection } from './amqpConnectionFactory';
 import { assertRejectableQueue } from './queueConfigurator';
+import INackOptions from './INackOptions';
+import IQueueOptions from './IQueueOptions';
 
 export async function bindMessageRetryable<TMessage>(
 	amqpConnection: IAMQPConnection,
@@ -68,4 +71,52 @@ export async function bindMessage<TMessage>(
 			throw error;
 		}
 	});
+}
+
+interface IMessageConsumption<TMessage> {
+	message: TMessage;
+	ack: () => void;
+	nack: (options?: INackOptions) => void;
+}
+
+export async function bindMessagePrefetchedExpectingConfirmationRepeatable<TMessage>(
+	amqpConnection: IAMQPConnection,
+	queueName: string,
+	prefetchCount: number,
+	debounceTimeoutMs: number,
+	onMessages: (
+		messages: TMessage[],
+		ack: (message: TMessage) => void,
+		nack: (message: TMessage, options?: INackOptions) => void,
+	) => Promise<void>,
+	options: IQueueOptions,
+) {
+	const unconsumedConsumptions: IMessageConsumption<TMessage>[] = [];
+	const consumedConsumptions: IMessageConsumption<TMessage>[] = [];
+	const resolveConsumption = (ackOrNack: 'ack' | 'nack') => (message: TMessage) => {
+		const indexOfMessage = consumedConsumptions.findIndex((consumption: IMessageConsumption<TMessage>) => consumption.message === message);
+		const consumption = consumedConsumptions[indexOfMessage];
+		consumedConsumptions.splice(indexOfMessage, 1);
+		consumption[ackOrNack]();
+	};
+	const debouncedOnMessages = _.debounce(
+		() => {
+			let consumption: IMessageConsumption<TMessage> | undefined;
+			const messages = [];
+			while (consumption = unconsumedConsumptions.shift()) {
+				messages.push(consumption.message);
+				consumedConsumptions.push(consumption);
+			}
+			onMessages(messages, resolveConsumption('ack'), resolveConsumption('nack'));
+		},
+		debounceTimeoutMs,
+	);
+	return await amqpConnection.queueSubscriber.subscribeExpectingConfirmationRepeatable(
+		queueName,
+		async (message: TMessage, ack: () => void, nack: (nackOptions?: INackOptions) => void) => {
+			unconsumedConsumptions.push({ message, ack, nack });
+			debouncedOnMessages();
+		},
+		{ ...options, prefetchCount },
+	);
 }

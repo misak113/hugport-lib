@@ -3,6 +3,7 @@ import { IAMQPConnection } from '../amqpConnectionFactory';
 import fetchNextMessage from '../fetchNextMessage';
 import INackOptions from '../INackOptions';
 import IEvent, { IEventPayload } from './IEvent';
+import { bindMessagePrefetchedExpectingConfirmationRepeatable } from '../bindMessage';
 
 const QUEUE_NAME_PREFIX = 'events.';
 const OPTIONS = {
@@ -50,6 +51,28 @@ export async function bindOneExpectingConfirmation<TPayload extends IEventPayloa
 ) {
 	const queueName = QUEUE_NAME_PREFIX + eventType;
 	return await amqpConnection.queueSubscriber.subscribeExpectingConfirmationRepeatable(queueName, onEvent, OPTIONS);
+}
+
+export async function bindPrefetchedExpectingConfirmation<TPayload extends IEventPayload>(
+	amqpConnection: IAMQPConnection,
+	eventType: string,
+	prefetchCount: number,
+	debounceTimeoutMs: number,
+	onEvents: (
+		events: IEvent<TPayload>[],
+		ack: (event: IEvent<TPayload>) => void,
+		nack: (event: IEvent<TPayload>, options?: INackOptions) => void,
+	) => Promise<void>,
+) {
+	const queueName = QUEUE_NAME_PREFIX + eventType;
+	return await bindMessagePrefetchedExpectingConfirmationRepeatable(
+		amqpConnection,
+		queueName,
+		prefetchCount,
+		debounceTimeoutMs,
+		onEvents,
+		OPTIONS,
+	);
 }
 
 export async function purgeMore(amqpConnection: IAMQPConnection, eventTypes: string[]) {
