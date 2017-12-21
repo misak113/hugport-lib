@@ -23,6 +23,10 @@
   dependencies:
     "@types/node" "*"
 
+"@types/lodash@^4.14.91":
+  version "4.14.91"
+  resolved "https://npm.hugport.com/@types%2flodash/-/lodash-4.14.91.tgz#794611b28056d16b5436059c6d800b39d573cd3a"
+
 "@types/mocha@^2.2.41":
   version "2.2.41"
   resolved "https://npm.hugport.com/@types%2fmocha/-/mocha-2.2.41.tgz#e27cf0817153eb9f2713b2d3f6c68f1e1c3ca608"
@@ -368,6 +372,10 @@ lodash.keys@^3.0.0:
     lodash._getnative "^3.0.0"
     lodash.isarguments "^3.0.0"
     lodash.isarray "^3.0.0"
+
+lodash@^4.17.4:
+  version "4.17.4"
+  resolved "https://npm.hugport.com/lodash/-/lodash-4.17.4.tgz#78203a4d1c328ae1d86dca6460e369b57f4055ae"
 
 lolex@^1.6.0:
   version "1.6.0"
