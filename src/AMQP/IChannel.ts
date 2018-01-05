@@ -7,8 +7,13 @@ export default IChannel;
 interface IChannel<TMessage> {
 	send(message: TMessage, messageOptions?: IMessageOptions): Promise<void>;
 	sendExpectingResponse<TResponseMessage>(message: TMessage, messageOptions?: IMessageOptions): Promise<TResponseMessage>;
-	consume<TResponseMessage>(onMessage: (message: any) => Promise<TResponseMessage>, onEnded?: () => void): Promise<ICancelConsumption>;
+	consume<TResponseMessage>(
+		queueName: string,
+		onMessage: (message: any) => Promise<TResponseMessage>,
+		onEnded?: () => void,
+	): Promise<ICancelConsumption>;
 	consumeExpectingConfirmation<TResponseMessage>(
+		queueName: string,
 		onMessage: (
 			message: any,
 			ack: () => void,

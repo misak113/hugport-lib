@@ -50,8 +50,7 @@ export async function enqueue<TCommandType extends string>(
 	command: ICommand<TCommandType>,
 	messageOptions: IMessageOptions = { priority: 5 },
 ) {
-	const queueName = QUEUE_NAME;
-	await amqpConnection.queuePublisher.enqueueRepeatable(queueName, command, OPTIONS, messageOptions);
+	await amqpConnection.queuePublisher.enqueueRepeatable(command, QUEUE_NAME, undefined, OPTIONS, messageOptions);
 }
 
 export async function process<TType extends string, TCommandError extends ICommandError<string>>(
@@ -59,10 +58,10 @@ export async function process<TType extends string, TCommandError extends IComma
 	command: ICommand<TType>,
 	messageOptions: IMessageOptions = { priority: 6 },
 ) {
-	const queueName = QUEUE_NAME;
 	return await amqpConnection.queuePublisher.enqueueExpectingResponseRepeatable<ICommand<TType>, IResponse<TType, TCommandError>>(
-		queueName,
 		command,
+		QUEUE_NAME,
+		undefined,
 		OPTIONS,
 		messageOptions,
 	);
@@ -72,15 +71,19 @@ export async function bindAll<TCommandType extends string>(
 	amqpConnection: IAMQPConnection,
 	onCommand: (command: ICommand<TCommandType>) => Promise<IResponse<TCommandType, ICommandError<string>> | undefined>,
 ) {
-	const queueName = QUEUE_NAME;
-	return await amqpConnection.queueSubscriber.subscribeRepeatable(queueName, onCommand, OPTIONS);
+	return await amqpConnection.queueSubscriber.subscribeRepeatable(QUEUE_NAME, onCommand, QUEUE_NAME, undefined, OPTIONS);
 }
 
 export async function fetchNext<TCommandType extends string, TPayload extends ICommandPayload<TCommandType>>(
 	amqpConnection: IAMQPConnection,
 ): Promise<ICommand<TCommandType, TPayload> | null> {
-	const queueName = QUEUE_NAME;
-	return await fetchNextMessage<ICommand<TCommandType, TPayload> | null>(amqpConnection, queueName, { maxPriority: OPTIONS.maxPriority });
+	return await fetchNextMessage<ICommand<TCommandType, TPayload> | null>(
+		amqpConnection,
+		QUEUE_NAME,
+		QUEUE_NAME,
+		undefined,
+		{ maxPriority: OPTIONS.maxPriority }
+		);
 }
 
 export async function purgeAll(amqpConnection: IAMQPConnection) {

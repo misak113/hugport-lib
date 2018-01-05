@@ -4,8 +4,9 @@ import IMessageOptions from './IMessageOptions';
 
 export default IUnqueuedMessage;
 interface IUnqueuedMessage {
-	queueName: string;
 	message: any;
+	routingKey: string;
+	exchangeName?: string;
 	options?: IQueueOptions;
 	messageOptions?: IMessageOptions;
 	resolve: (response?: any) => void;

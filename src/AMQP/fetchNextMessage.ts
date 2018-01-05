@@ -3,10 +3,15 @@ import { Message } from 'amqplib';
 import { IAMQPConnection } from './amqpConnectionFactory';
 import { assertRejectableQueue } from './queueConfigurator';
 import { deserializeJSON } from '../JSON/jsonHelper';
+import {
+	ExchangeType,
+} from './Exchange';
 
 export default async function fetchNextMessage<TMessage>(
 	amqpConnection: IAMQPConnection,
 	queueName: string,
+	routingKey: string,
+	exchangeName: string = '',
 	options: {
 		priority?: number;
 		maxPriority?: number;
@@ -15,7 +20,9 @@ export default async function fetchNextMessage<TMessage>(
 	const connection = await amqpConnection.pool.acquire(options.priority);
 	try {
 		const channel = await connection.createConfirmChannel();
+		await channel.assertExchange(exchangeName, 'direct' as ExchangeType);
 		await assertRejectableQueue(channel, queueName, options.maxPriority);
+		await channel.bindQueue(queueName, exchangeName, routingKey);
 		const message: Message | boolean = await channel.get(queueName, { noAck: true });
 		await amqpConnection.pool.release(connection);
 		if (message && typeof message !== 'boolean') {
