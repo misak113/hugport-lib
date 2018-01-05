@@ -9,11 +9,9 @@ const OPTIONS = {
 };
 
 export async function enqueue(amqpConnection: IAMQPConnection, actionLog: IActionLog) {
-	const queueName = QUEUE_NAME;
-	await amqpConnection.queuePublisher.enqueueRepeatable(queueName, actionLog, OPTIONS);
+	await amqpConnection.queuePublisher.enqueueRepeatable(actionLog, QUEUE_NAME, undefined, OPTIONS);
 }
 
 export async function bindAll(amqpConnection: IAMQPConnection, onActionLog: (actionLog: IActionLog) => Promise<void>) {
-	const queueName = QUEUE_NAME;
-	await amqpConnection.queueSubscriber.subscribeRepeatable(queueName, onActionLog, OPTIONS);
+	return await amqpConnection.queueSubscriber.subscribeRepeatable(QUEUE_NAME, onActionLog, QUEUE_NAME, undefined, OPTIONS);
 }
