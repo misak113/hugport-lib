@@ -27,6 +27,12 @@
   version "2.2.41"
   resolved "https://npm.hugport.com/@types%2fmocha/-/mocha-2.2.41.tgz#e27cf0817153eb9f2713b2d3f6c68f1e1c3ca608"
 
+"@types/moment-timezone@^0.5.3":
+  version "0.5.3"
+  resolved "https://npm.hugport.com/@types%2fmoment-timezone/-/moment-timezone-0.5.3.tgz#66aecb4e8291c2bcf4fad9bfd51367c1edbd80c6"
+  dependencies:
+    moment ">=2.14.0"
+
 "@types/moment@^2.13.0":
   version "2.13.0"
   resolved "https://npm.hugport.com/@types%2fmoment/-/moment-2.13.0.tgz#604ebd189bc3bc34a1548689404e61a2a4aac896"
@@ -437,9 +443,19 @@ mocha@>=2.0.0, mocha@^3.3.0:
     mkdirp "0.5.1"
     supports-color "3.1.2"
 
+moment-timezone@^0.5.14:
+  version "0.5.14"
+  resolved "https://npm.hugport.com/moment-timezone/-/moment-timezone-0.5.14.tgz#4eb38ff9538b80108ba467a458f3ed4268ccfcb1"
+  dependencies:
+    moment ">= 2.9.0"
+
 moment@*, moment@^2.19.0:
   version "2.19.0"
   resolved "https://npm.hugport.com/moment/-/moment-2.19.0.tgz#44f675ef6b944942762581b1c179fb679e599d67"
+
+"moment@>= 2.9.0", moment@>=2.14.0:
+  version "2.20.1"
+  resolved "https://npm.hugport.com/moment/-/moment-2.20.1.tgz#d6eb1a46cbcc14a2b2f9434112c1ff8907f313fd"
 
 ms@0.7.2:
   version "0.7.2"
