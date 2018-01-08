@@ -67,6 +67,7 @@
     "@types/tar": "^4.0.0",
     "@types/tmp": "^0.0.33",
     "@types/webpack": "^3.8.1",
+    "amqplib": "^0.5.2",
     "hugport-codestyle": "^0.0.8",
     "mocha": "^3.3.0",
     "raven-js": "^3.12.1",

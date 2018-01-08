@@ -80,26 +80,32 @@ export default class ChannelProvider {
 				await sentPromise;
 				return await responsePromise;
 			},
-			consume: async (queueName: string, onMessage: (message: any) => Promise<any>, onEnded?: () => void) => {
-				return await channel.consumeExpectingConfirmation(
+			consumeSimple: async (queueName: string, onMessage: (message: any) => Promise<any>, onEnded?: () => void) => {
+				return await channel.consume(
 					queueName,
 					async (message: any, ack: () => void) => {
 						const response = await onMessage(message);
 						ack();
 						return response;
 					},
+					false,
 					onEnded,
 				);
 			},
-			consumeExpectingConfirmation: async (
+			consume: async (
 				queueName: string,
 				onMessage: (
 					message: any,
 					ack: () => void,
 					nack: (options?: INackOptions) => void
 				) => Promise<any>,
+				respond: boolean,
 				onEnded?: () => void
 			) => {
+				if (exchangeName === '' && queueName !== routingKey) {
+					throw new Error('If default exchange is used, queue name must match the routing key');
+				}
+
 				const channelIdentifier = this.getExchangeChannelIdentifier(exchangeName, routingKey);
 				const amqplibChannel = options.confirmable
 					? await this.getAmqplibConfirmChannel(amqplibConnection, channelIdentifier)
@@ -120,7 +126,7 @@ export default class ChannelProvider {
 				await amqplibChannel.prefetch(options.prefetchCount || DEFAULT_PREFETCH_COUNT);
 				await this.assertExchange(amqplibChannel, exchangeName, 'direct');
 				await this.assertRejectableQueue(amqplibChannel, queueName, options.maxPriority);
-				await amqplibChannel.bindQueue(queueName, exchangeName, routingKey);
+				await this.bindQueue(amqplibChannel, queueName, exchangeName, routingKey);
 				const { consumerTag } = await amqplibChannel.consume(queueName, async (amqplibMessage: AmqplibMessage) => {
 					try {
 						const message = this.decodeMessageBuffer(amqplibMessage.content);
@@ -133,7 +139,7 @@ export default class ChannelProvider {
 								nackOptions ? nackOptions.requeue : undefined // default refers to true
 							),
 						);
-						if (amqplibMessage.properties.replyTo) {
+						if (respond && amqplibMessage.properties.replyTo) {
 							const amqplibResponseChannel = await this.getAmqplibResponseChannel(
 								amqplibConnection,
 								amqplibMessage.properties.replyTo
@@ -162,7 +168,7 @@ export default class ChannelProvider {
 	}
 
 	public encodeMessageIntoBuffer(message: any) {
-		return new Buffer(JSON.stringify(message));
+		return new Buffer(typeof message !== 'undefined' ? JSON.stringify(message) : '');
 	}
 
 	public async getAmqplibResponseChannel(
@@ -288,14 +294,22 @@ export default class ChannelProvider {
 	}
 
 	private async assertExchange(amqplibChannel: AmqplibChannel, exchangeName: string, type: ExchangeType) {
-		await amqplibChannel.assertExchange(exchangeName, type);
+		if (exchangeName !== '') {
+			await amqplibChannel.assertExchange(exchangeName, type);
+		}
 	}
 
 	private async assertRejectableQueue(amqplibChannel: AmqplibChannel, queueName: string, maxPriority: number | undefined) {
-		await amqplibChannel.assertQueue(queueName, {
+		return await amqplibChannel.assertQueue(queueName, {
 			deadLetterExchange: '',
 			deadLetterRoutingKey: REJECTED_QUEUE_PREFIX + queueName,
 			maxPriority,
 		});
+	}
+
+	private async bindQueue(amqplibChannel: AmqplibChannel, queueName: string, exchangeName: string, routingKey: string) {
+		if (exchangeName !== '') {
+			await amqplibChannel.bindQueue(queueName, exchangeName, routingKey);
+		}
 	}
 }

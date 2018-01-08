@@ -13,5 +13,5 @@ export async function enqueue(amqpConnection: IAMQPConnection, actionLog: IActio
 }
 
 export async function bindAll(amqpConnection: IAMQPConnection, onActionLog: (actionLog: IActionLog) => Promise<void>) {
-	await amqpConnection.queueSubscriber.subscribeRepeatable(QUEUE_NAME, onActionLog, QUEUE_NAME, undefined, OPTIONS);
+	return await amqpConnection.queueSubscriber.subscribeRepeatable(QUEUE_NAME, onActionLog, QUEUE_NAME, undefined, OPTIONS);
 }

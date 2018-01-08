@@ -19,23 +19,23 @@ export default class QueuePublisher {
 		private unsubscribedMessageStorage: IArrayStorage<IUnsubscribedMessage>,
 	) {}
 
-	public async subscribe<TMessage, TResponseMessage>(
+	public async subscribe<TMessage>(
 		queueName: string,
-		onMessage: (message: TMessage) => Promise<TResponseMessage>,
+		onMessage: (message: TMessage) => Promise<void>,
 		routingKey: string,
 		exchangeName?: string,
 		options: IQueueOptions = {},
 		onEnded?: () => void,
 	): Promise<ICancelConsumption> {
 		const channel = await this.channelProvider.getChannel(routingKey, exchangeName, options);
-		const cancelConsumption = await channel.consume(queueName, onMessage, onEnded);
+		const cancelConsumption = await channel.consumeSimple(queueName, onMessage, onEnded);
 		debug('Messages subscribed: %s', queueName, routingKey, exchangeName);
 		return cancelConsumption;
 	}
 
-	public async subscribeRepeatable<TMessage, TResponseMessage>(
+	public async subscribeRepeatable<TMessage>(
 		queueName: string,
-		onMessage: (message: TMessage) => Promise<TResponseMessage>,
+		onMessage: (message: TMessage) => Promise<void>,
 		routingKey: string,
 		exchangeName?: string,
 		options: IQueueOptions = {},
@@ -62,7 +62,7 @@ export default class QueuePublisher {
 		onEnded?: () => void
 	): Promise<ICancelConsumption> {
 		const channel = await this.channelProvider.getChannel(routingKey, exchangeName, options);
-		const cancelConsumption = await channel.consumeExpectingConfirmation(queueName, onMessage, onEnded);
+		const cancelConsumption = await channel.consume(queueName, onMessage, true, onEnded);
 		debug('Messages subscribed expecting confirmation: %s', queueName, routingKey, exchangeName);
 		return cancelConsumption;
 	}

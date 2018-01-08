@@ -17,12 +17,20 @@ export default async function fetchNextMessage<TMessage>(
 		maxPriority?: number;
 	} = {},
 ): Promise<TMessage | null> {
+	if (exchangeName === '' && queueName !== routingKey) {
+		throw new Error('If default exchange is used, queue name must match the routing key');
+	}
+
 	const connection = await amqpConnection.pool.acquire(options.priority);
 	try {
 		const channel = await connection.createConfirmChannel();
-		await channel.assertExchange(exchangeName, 'direct' as ExchangeType);
+		if (exchangeName !== '') {
+			await channel.assertExchange(exchangeName, 'direct' as ExchangeType);
+		}
 		await assertRejectableQueue(channel, queueName, options.maxPriority);
-		await channel.bindQueue(queueName, exchangeName, routingKey);
+		if (exchangeName !== '') {
+			await channel.bindQueue(queueName, exchangeName, routingKey);
+		}
 		const message: Message | boolean = await channel.get(queueName, { noAck: true });
 		await amqpConnection.pool.release(connection);
 		if (message && typeof message !== 'boolean') {

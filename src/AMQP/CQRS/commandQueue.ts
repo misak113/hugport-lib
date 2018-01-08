@@ -71,7 +71,17 @@ export async function bindAll<TCommandType extends string>(
 	amqpConnection: IAMQPConnection,
 	onCommand: (command: ICommand<TCommandType>) => Promise<IResponse<TCommandType, ICommandError<string>> | undefined>,
 ) {
-	return await amqpConnection.queueSubscriber.subscribeRepeatable(QUEUE_NAME, onCommand, QUEUE_NAME, undefined, OPTIONS);
+	return await amqpConnection.queueSubscriber.subscribeExpectingConfirmationRepeatable(
+		QUEUE_NAME,
+		async (command: ICommand<TCommandType>, ack: () => void) => {
+			const response = await onCommand(command);
+			ack();
+			return response;
+		},
+		QUEUE_NAME,
+		undefined,
+		OPTIONS,
+	);
 }
 
 export async function fetchNext<TCommandType extends string, TPayload extends ICommandPayload<TCommandType>>(
