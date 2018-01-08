@@ -8,6 +8,7 @@ import {
 	purgeAll,
 } from '../../../../src/AMQP/CQRS/commandQueue';
 import waitUntil from '../../../../src/DateTime/waitUntil';
+import wait from '../../../../src/Timer/wait';
 import {
 	amqpConnection,
 } from '../../connections';
@@ -196,7 +197,9 @@ describe('AMQP.CQRS.commandQueue', function () {
 			channel.sendToQueue('commands', new Buffer(JSON.stringify(createCommand({ a: 4 }))));
 			channel.sendToQueue('commands', new Buffer(JSON.stringify(createCommand({ a: 5 }))));
 
-			await purgeAll(amqpConnection);
+			await wait(500);
+			const purgedCount = await purgeAll(amqpConnection);
+			purgedCount.should.equal(5);
 
 			const nextCommand = await channel.get('commands');
 			if (nextCommand) {

@@ -97,6 +97,13 @@ export async function fetchNext<TCommandType extends string, TPayload extends IC
 }
 
 export async function purgeAll(amqpConnection: IAMQPConnection) {
-	/* tslint:disable-next-line */
-	while (await fetchNext(amqpConnection));
+	let purgedCount = 0;
+	while (true) {
+		const next = await fetchNext(amqpConnection);
+		if (next) {
+			purgedCount++;
+		} else {
+			return purgedCount;
+		}
+	}
 }

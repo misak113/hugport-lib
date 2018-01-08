@@ -9,6 +9,7 @@ import {
 	purgeMore,
 } from '../../../../src/AMQP/EventSourcing/eventQueue';
 import waitUntil from '../../../../src/DateTime/waitUntil';
+import wait from '../../../../src/Timer/wait';
 
 describe('AMQP.EventSourcing.eventQueue', function () {
 
@@ -126,18 +127,22 @@ describe('AMQP.EventSourcing.eventQueue', function () {
 			await channel.bindQueue('consumer3_event1', 'destination3', 'event1');
 
 			channel.publish('destination1', 'event1', new Buffer(JSON.stringify(createEvent('event1', 1))));
+			await wait(200);
 			const event1 = await fetchNext(amqpConnection, 'event1', 'destination1', 'consumer1');
 			event1!.should.deepEqual(createEvent('event1', 1));
 
 			channel.publish('destination1', 'event2', new Buffer(JSON.stringify(createEvent('event2', 2))));
+			await wait(200);
 			const event2 = await fetchNext(amqpConnection, 'event2', 'destination1', 'consumer1');
 			event2!.should.deepEqual(createEvent('event2', 2));
 
 			channel.publish('destination2', 'event1', new Buffer(JSON.stringify(createEvent('event1', 3))));
+			await wait(200);
 			const event3 = await fetchNext(amqpConnection, 'event1', 'destination2', 'consumer2');
 			event3!.should.deepEqual(createEvent('event1', 3));
 
 			channel.publish('destination3', 'event1', new Buffer(JSON.stringify(createEvent('event1', 4))));
+			await wait(200);
 			const event4 = await fetchNext(amqpConnection, 'event1', 'destination3', 'consumer3');
 			event4!.should.deepEqual(createEvent('event1', 4));
 		});

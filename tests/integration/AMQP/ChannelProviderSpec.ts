@@ -3,6 +3,7 @@ import { Channel, Message } from 'amqplib';
 import ChannelProvider from '../../../src/AMQP/ChannelProvider';
 import { deserializeJSON } from '../../../src/JSON/jsonHelper';
 import waitUntil from '../../../src/DateTime/waitUntil';
+import wait from '../../../src/Timer/wait';
 import {
 	amqpConnection,
 } from '../connections';
@@ -47,6 +48,7 @@ describe('AMQP.ChannelProvider', function () {
 
 			const channelInstance = await this.channelProvider.getChannel('route1', 'exchange1');
 			await channelInstance.send({ a: 1, b: 2 });
+			await wait(500);
 
 			const message1 = await rawTestChannel.get('queue1', { noAck: true });
 			const message2 = await rawTestChannel.get('queue2', { noAck: true });
