@@ -199,6 +199,9 @@ describe('AMQP.CQRS.commandQueue', function () {
 			await purgeAll(amqpConnection);
 
 			const nextCommand = await channel.get('commands');
+			if (nextCommand) {
+				console.log(JSON.parse(nextCommand.content.toString()));
+			}
 			should(nextCommand).be.false();
 		});
 	});
