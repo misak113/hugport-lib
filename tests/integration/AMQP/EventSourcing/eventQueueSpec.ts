@@ -57,7 +57,7 @@ describe('AMQP.EventSourcing.eventQueue', function () {
 			await channel.bindQueue('consumer3_event1', 'destination3', 'event1');
 
 			await enqueue(amqpConnection, createEvent('event1', 1), 'destination1');
-			const result1 = await channel.get('destination1_event1');
+			const result1 = await channel.get('consumer1_event1');
 			JSON.parse(result1!.content.toString()).should.deepEqual({
 				...createEvent('event1', 1),
 				dispatchedAt: new Date(2018, 0, 1).toISOString(),
@@ -65,7 +65,7 @@ describe('AMQP.EventSourcing.eventQueue', function () {
 			});
 
 			await enqueue(amqpConnection, createEvent('event2', 2), 'destination1');
-			const result2 = await channel.get('destination1_event2');
+			const result2 = await channel.get('consumer1_event2');
 			JSON.parse(result2!.content.toString()).should.deepEqual({
 				...createEvent('event2', 2),
 				dispatchedAt: new Date(2018, 0, 1).toISOString(),
@@ -73,7 +73,7 @@ describe('AMQP.EventSourcing.eventQueue', function () {
 			});
 
 			await enqueue(amqpConnection, createEvent('event1', 3), 'destination2');
-			const result3 = await channel.get('destination2_event1');
+			const result3 = await channel.get('consumer2_event1');
 			JSON.parse(result3!.content.toString()).should.deepEqual({
 				...createEvent('event1', 3),
 				dispatchedAt: new Date(2018, 0, 1).toISOString(),
@@ -81,7 +81,7 @@ describe('AMQP.EventSourcing.eventQueue', function () {
 			});
 
 			await enqueue(amqpConnection, createEvent('event1', 4), 'destination3');
-			const result4 = await channel.get('destination3_event1');
+			const result4 = await channel.get('consumer3_event1');
 			JSON.parse(result4!.content.toString()).should.deepEqual({
 				...createEvent('event1', 4),
 				dispatchedAt: new Date(2018, 0, 1).toISOString(),
