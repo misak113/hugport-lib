@@ -403,6 +403,10 @@ lodash.keys@^3.0.0:
     lodash.isarguments "^3.0.0"
     lodash.isarray "^3.0.0"
 
+lodash@^4.17.4:
+  version "4.17.4"
+  resolved "https://npm.hugport.com/lodash/-/lodash-4.17.4.tgz#78203a4d1c328ae1d86dca6460e369b57f4055ae"
+
 lolex@^1.6.0:
   version "1.6.0"
   resolved "https://npm.hugport.com/lolex/-/lolex-1.6.0.tgz#3a9a0283452a47d7439e72731b9e07d7386e49f6"
