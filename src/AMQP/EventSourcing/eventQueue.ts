@@ -12,6 +12,7 @@ const OPTIONS = {
 
 export const DATABASE = 'database';
 export const DEVICE = 'device';
+export const APPLET_BUILDER = 'applet_builder';
 
 export async function enqueue(amqpConnection: IAMQPConnection, event: IEvent<IEventPayload>, destination: string) {
 	await amqpConnection.queuePublisher.enqueueRepeatable(event, event.type, destination, OPTIONS);
