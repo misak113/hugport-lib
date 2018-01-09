@@ -14,6 +14,7 @@ export const DATABASE = 'database';
 export const DEVICE = 'device';
 export const APPLET_BUILDER = 'applet_builder';
 export const DATA_REPORTER = 'data_reporter';
+export const MONITORING = 'monitoring';
 
 export async function enqueue(amqpConnection: IAMQPConnection, event: IEvent<IEventPayload>, destination: string) {
 	await amqpConnection.queuePublisher.enqueueRepeatable(event, event.type, destination, OPTIONS);
