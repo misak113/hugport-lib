@@ -15,12 +15,14 @@
         "noUnusedParameters": true,
         "noUnusedLocals": true,
         "typeRoots": [
-            "node_modules/@types/"
+            "node_modules/@types/",
+            "types/"
         ],
         "lib": ["esnext"]
     },
     "include": [
         "src/**/*.ts",
-        "src/**/*.tsx"
+        "src/**/*.tsx",
+        "types/**/*.d.ts"
     ]
 }

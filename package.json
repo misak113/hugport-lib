@@ -7,6 +7,7 @@
     "docker",
     "docker-node",
     "libs",
+    "types",
     "tools",
     "README.md",
     "package.json"
