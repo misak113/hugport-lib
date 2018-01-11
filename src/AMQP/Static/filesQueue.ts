@@ -15,6 +15,7 @@ export async function saveFileBuffer(amqpConnection: IAMQPConnection, fileName: 
 	try {
 		const channel = await connection.createChannel();
 		channel.sendToQueue('static.files.upload', fileBuffer, { headers: { fileName } });
+		await channel.close();
 	} finally {
 		await amqpConnection.pool.release(connection);
 	}
