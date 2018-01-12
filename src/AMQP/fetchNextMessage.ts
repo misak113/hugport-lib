@@ -32,6 +32,7 @@ export default async function fetchNextMessage<TMessage>(
 			await channel.bindQueue(queueName, exchangeName, routingKey);
 		}
 		const message: Message | boolean = await channel.get(queueName, { noAck: true });
+		await channel.close();
 		await amqpConnection.pool.release(connection);
 		if (message && typeof message !== 'boolean') {
 			return message.content ? JSON.parse(message.content.toString(), deserializeJSON) : null;
