@@ -1,4 +1,6 @@
 image: docker:latest
+services:
+  - docker:dind
 
 cache:
   untracked: true
@@ -12,6 +14,10 @@ build:
     - tags
   image: $CI_REGISTRY/signageos/docker-yarn:git
   stage: build
+  services:
+    - rabbitmq:3.6.6-alpine
+  variables:
+    amqp_dsn: amqp://guest:guest@rabbitmq:5672/
   script:
     - export TAG=`node tools/tag-by-branch $CI_COMMIT_REF_NAME`
     - yarn config set cache-folder .yarn-cache
