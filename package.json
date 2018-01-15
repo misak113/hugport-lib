@@ -33,6 +33,7 @@
     "debug": "^2.6.3",
     "fs-extra": "^4.0.3",
     "generic-pool": "^3.1.7",
+    "lodash": "^4.17.4",
     "mocha-jenkins-reporter": "^0.2.6",
     "moment": "^2.19.0",
     "moment-timezone": "^0.5.14",
@@ -48,6 +49,9 @@
     "raven-js": "^3.12.1",
     "redis": "^2.8.0"
   },
+  "engines": {
+    "node": "^8.4.0"
+  },
   "publishConfig": {
     "registry": "https://npm.hugport.com",
     "access": "public"
@@ -56,9 +60,10 @@
     "@types/amqplib": "^0.5.1",
     "@types/debug": "^0.0.29",
     "@types/fs-extra": "^4.0.5",
+    "@types/lodash": "^4.14.92",
     "@types/mocha": "^2.2.41",
     "@types/moment": "^2.13.0",
-    "@types/node": "^7.0.12",
+    "@types/node": "8.5.0",
     "@types/pg-promise": "^0.0.29",
     "@types/redis": "^2.6.0",
     "@types/rethinkdb": "^2.3.2",
@@ -70,6 +75,7 @@
     "@types/tmp": "^0.0.33",
     "@types/webpack": "^3.8.1",
     "amqplib": "^0.5.2",
+    "azure-storage": "^2.7.0",
     "hugport-codestyle": "^0.0.8",
     "lodash": "^4.17.4",
     "mocha": "^3.3.0",
