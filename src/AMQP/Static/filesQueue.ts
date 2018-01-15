@@ -6,6 +6,7 @@ import { Message } from 'amqplib';
 import * as Debug from 'debug';
 const debug = Debug('@signageos/lib:AMQP:Static:filesQueue');
 
+const UPLOAD_QUEUE_NAME: string = 'static.files.upload';
 const DELETE_MORE_QUEUE_NAME = 'static.files.delete_more';
 
 export interface IFileFilter {
@@ -25,7 +26,7 @@ export async function saveFileBuffer(amqpConnection: IAMQPConnection, fileName: 
 	const connection = await amqpConnection.pool.acquire();
 	try {
 		const channel = await connection.createChannel();
-		channel.sendToQueue('static.files.upload', fileBuffer, { headers: { fileName } });
+		channel.sendToQueue(UPLOAD_QUEUE_NAME, fileBuffer, { headers: { fileName } });
 		await channel.close();
 	} finally {
 		await amqpConnection.pool.release(connection);
