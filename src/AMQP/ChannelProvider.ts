@@ -83,10 +83,15 @@ export default class ChannelProvider {
 			consumeSimple: async (queueName: string, onMessage: (message: any) => Promise<any>, onEnded?: () => void) => {
 				return await channel.consume(
 					queueName,
-					async (message: any, ack: () => void) => {
-						const response = await onMessage(message);
-						ack();
-						return response;
+					async (message: any, ack: () => void, nack: (nackOptions?: INackOptions) => void) => {
+						try {
+							const response = await onMessage(message);
+							ack();
+							return response;
+						} catch (error) {
+							nack();
+							throw error;
+						}
 					},
 					false,
 					onEnded,
