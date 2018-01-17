@@ -73,10 +73,15 @@ export async function bindAll<TCommandType extends string>(
 ) {
 	return await amqpConnection.queueSubscriber.subscribeExpectingConfirmationRepeatable(
 		QUEUE_NAME,
-		async (command: ICommand<TCommandType>, ack: () => void) => {
-			const response = await onCommand(command);
-			ack();
-			return response;
+		async (command: ICommand<TCommandType>, ack: () => void, nack: () => void) => {
+			try {
+				const response = await onCommand(command);
+				ack();
+				return response;
+			} catch (error) {
+				nack();
+				throw error;
+			}
 		},
 		QUEUE_NAME,
 		undefined,

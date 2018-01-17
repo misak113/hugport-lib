@@ -83,10 +83,15 @@ export default class ChannelProvider {
 			consumeSimple: async (queueName: string, onMessage: (message: any) => Promise<any>, onEnded?: () => void) => {
 				return await channel.consume(
 					queueName,
-					async (message: any, ack: () => void) => {
-						const response = await onMessage(message);
-						ack();
-						return response;
+					async (message: any, ack: () => void, nack: (options?: INackOptions) => void) => {
+						try {
+							const response = await onMessage(message);
+							ack();
+							return response;
+						} catch (error) {
+							nack({ requeue: true });
+							throw error;
+						}
 					},
 					false,
 					onEnded,
@@ -128,31 +133,26 @@ export default class ChannelProvider {
 				await this.assertRejectableQueue(amqplibChannel, queueName, options.maxPriority);
 				await this.bindQueue(amqplibChannel, queueName, exchangeName, routingKey);
 				const { consumerTag } = await amqplibChannel.consume(queueName, async (amqplibMessage: AmqplibMessage) => {
-					try {
-						const message = this.decodeMessageBuffer(amqplibMessage.content);
-						const response = await onMessage(
-							message,
-							() => amqplibChannel.ack(amqplibMessage),
-							(nackOptions?: INackOptions) => amqplibChannel.nack(
-								amqplibMessage,
-								undefined,
-								nackOptions ? nackOptions.requeue : undefined // default refers to true
-							),
+					const message = this.decodeMessageBuffer(amqplibMessage.content);
+					const response = await onMessage(
+						message,
+						() => amqplibChannel.ack(amqplibMessage),
+						(nackOptions?: INackOptions) => amqplibChannel.nack(
+							amqplibMessage,
+							undefined,
+							nackOptions ? nackOptions.requeue : undefined // default refers to true
+						),
+					);
+					if (respond && amqplibMessage.properties.replyTo) {
+						const amqplibResponseChannel = await this.getAmqplibResponseChannel(
+							amqplibConnection,
+							amqplibMessage.properties.replyTo
 						);
-						if (respond && amqplibMessage.properties.replyTo) {
-							const amqplibResponseChannel = await this.getAmqplibResponseChannel(
-								amqplibConnection,
-								amqplibMessage.properties.replyTo
-							);
-							amqplibResponseChannel.sendToQueue(
-								amqplibMessage.properties.replyTo,
-								this.encodeMessageIntoBuffer(response),
-								{ correlationId: amqplibMessage.properties.correlationId },
-							);
-						}
-					} catch (error) {
-						amqplibChannel.nack(amqplibMessage);
-						throw error;
+						amqplibResponseChannel.sendToQueue(
+							amqplibMessage.properties.replyTo,
+							this.encodeMessageIntoBuffer(response),
+							{ correlationId: amqplibMessage.properties.correlationId },
+						);
 					}
 				});
 				return async () => {
