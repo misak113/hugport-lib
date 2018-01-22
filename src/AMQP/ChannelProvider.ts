@@ -78,7 +78,9 @@ export default class ChannelProvider {
 					}
 				);
 				await sentPromise;
-				return await responsePromise;
+				const response = await responsePromise;
+				await amqplibResponseChannel.close();
+				return response;
 			},
 			consumeSimple: async (queueName: string, onMessage: (message: any) => Promise<any>, onEnded?: () => void) => {
 				return await channel.consume(
@@ -149,6 +151,7 @@ export default class ChannelProvider {
 								this.encodeMessageIntoBuffer(response),
 								{ correlationId: amqplibMessage.properties.correlationId },
 							);
+							await amqplibResponseChannel.close();
 						}
 					} catch (error) {
 						amqplibChannel.nack(amqplibMessage);
@@ -175,14 +178,12 @@ export default class ChannelProvider {
 		amqplibConnection: AmqplibConnection,
 		queueName: string,
 	): Promise<AmqplibChannel> {
-		return await this.getOrCreateAmqplibChannel('response-' + queueName, async () => {
-			const amqplibChannel = await amqplibConnection.createChannel();
-			await amqplibChannel.assertQueue(queueName, {
-				durable: false,
-				autoDelete: true,
-			});
-			return amqplibChannel;
+		const amqplibChannel = await amqplibConnection.createChannel();
+		await amqplibChannel.assertQueue(queueName, {
+			durable: false,
+			autoDelete: true,
 		});
+		return amqplibChannel;
 	}
 
 	public async getAmqplibConnection() {
