@@ -14,19 +14,23 @@ export interface IFileFilter {
 	createdAtBefore?: Date;
 }
 
-export async function saveFile(amqpConnection: IAMQPConnection, fileName: string, filePath: string) {
+export interface IFileOptions {
+	contentType?: string;
+}
+
+export async function saveFile(amqpConnection: IAMQPConnection, fileName: string, filePath: string, options?: IFileOptions) {
 	const fileBuffer = await new Promise((resolve: (fileBuffer: Buffer) => void, reject: (error: Error) => void) => fs.readFile(
 		filePath,
 		(error: Error, data: Buffer) => error ? reject(error) : resolve(data)),
 	);
-	await saveFileBuffer(amqpConnection, fileName, fileBuffer);
+	await saveFileBuffer(amqpConnection, fileName, fileBuffer, options);
 }
 
-export async function saveFileBuffer(amqpConnection: IAMQPConnection, fileName: string, fileBuffer: Buffer) {
+export async function saveFileBuffer(amqpConnection: IAMQPConnection, fileName: string, fileBuffer: Buffer, options?: IFileOptions) {
 	const connection = await amqpConnection.pool.acquire();
 	try {
 		const channel = await connection.createChannel();
-		channel.sendToQueue(UPLOAD_QUEUE_NAME, fileBuffer, { headers: { fileName } });
+		channel.sendToQueue(UPLOAD_QUEUE_NAME, fileBuffer, { headers: { fileName, ...options } });
 		await channel.close();
 	} finally {
 		await amqpConnection.pool.release(connection);
