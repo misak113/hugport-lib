@@ -65,11 +65,11 @@ export default class ChannelProvider {
 						await amqplibResponseChannel.prefetch(1);
 						const { consumerTag } = await amqplibResponseChannel.consume(
 							responseQueueName,
-							(amqplibResponseMessage: AmqplibMessage) => {
+							async (amqplibResponseMessage: AmqplibMessage) => {
 								if (amqplibResponseMessage.properties.correlationId === correlationId) {
-									resolve(this.decodeMessageBuffer(amqplibResponseMessage.content));
 									amqplibResponseChannel.ack(amqplibResponseMessage);
-									amqplibResponseChannel.cancel(consumerTag);
+									await amqplibResponseChannel.cancel(consumerTag);
+									resolve(this.decodeMessageBuffer(amqplibResponseMessage.content));
 								} else {
 									amqplibResponseChannel.nack(amqplibResponseMessage);
 								}
@@ -79,7 +79,11 @@ export default class ChannelProvider {
 				);
 				await sentPromise;
 				const response = await responsePromise;
-				await amqplibResponseChannel.close();
+				try {
+					await amqplibResponseChannel.close();
+				} catch (error) {
+					// nothing
+				}
 				return response;
 			},
 			consumeSimple: async (queueName: string, onMessage: (message: any) => Promise<any>, onEnded?: () => void) => {
@@ -146,16 +150,12 @@ export default class ChannelProvider {
 						),
 					);
 					if (respond && amqplibMessage.properties.replyTo) {
-						const amqplibResponseChannel = await this.getAmqplibResponseChannel(
-							amqplibConnection,
-							amqplibMessage.properties.replyTo
-						);
-						amqplibResponseChannel.sendToQueue(
+						await this.assertResponseQueue(amqplibChannel, amqplibMessage.properties.replyTo);
+						amqplibChannel.sendToQueue(
 							amqplibMessage.properties.replyTo,
 							this.encodeMessageIntoBuffer(response),
 							{ correlationId: amqplibMessage.properties.correlationId },
 						);
-						await amqplibResponseChannel.close();
 					}
 				});
 				return async () => {
@@ -179,11 +179,15 @@ export default class ChannelProvider {
 		queueName: string,
 	): Promise<AmqplibChannel> {
 		const amqplibChannel = await amqplibConnection.createChannel();
+		await this.assertResponseQueue(amqplibChannel, queueName);
+		return amqplibChannel;
+	}
+
+	public async assertResponseQueue(amqplibChannel: AmqplibChannel, queueName: string) {
 		await amqplibChannel.assertQueue(queueName, {
 			durable: false,
 			autoDelete: true,
 		});
-		return amqplibChannel;
 	}
 
 	public async getAmqplibConnection() {
