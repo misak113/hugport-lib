@@ -146,16 +146,12 @@ export default class ChannelProvider {
 						),
 					);
 					if (respond && amqplibMessage.properties.replyTo) {
-						const amqplibResponseChannel = await this.getAmqplibResponseChannel(
-							amqplibConnection,
-							amqplibMessage.properties.replyTo
-						);
-						amqplibResponseChannel.sendToQueue(
+						await this.assertResponseQueue(amqplibChannel, amqplibMessage.properties.replyTo);
+						amqplibChannel.sendToQueue(
 							amqplibMessage.properties.replyTo,
 							this.encodeMessageIntoBuffer(response),
 							{ correlationId: amqplibMessage.properties.correlationId },
 						);
-						await amqplibResponseChannel.close();
 					}
 				});
 				return async () => {
@@ -179,11 +175,15 @@ export default class ChannelProvider {
 		queueName: string,
 	): Promise<AmqplibChannel> {
 		const amqplibChannel = await amqplibConnection.createChannel();
+		await this.assertResponseQueue(amqplibChannel, queueName);
+		return amqplibChannel;
+	}
+
+	public async assertResponseQueue(amqplibChannel: AmqplibChannel, queueName: string) {
 		await amqplibChannel.assertQueue(queueName, {
 			durable: false,
 			autoDelete: true,
 		});
-		return amqplibChannel;
 	}
 
 	public async getAmqplibConnection() {
