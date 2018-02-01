@@ -4,6 +4,7 @@ import * as path from 'path';
 import * as fs from 'fs-extra';
 import * as tar from 'tar';
 import * as tmp from 'tmp';
+import { execSync } from 'child_process';
 
 export default class NpmPackPlugin {
 
@@ -13,6 +14,7 @@ export default class NpmPackPlugin {
 			environment: string;
 			rootPath: string;
 			packagesPath: string;
+			dependencies?: string[];
 		},
 	) {}
 
@@ -44,8 +46,24 @@ export default class NpmPackPlugin {
 					['package'],
 				);
 
+				this.packDependencies();
 				console.info('Tarball release ' + tarballFileName);
 			}
 		});
+	}
+
+	private packDependencies() {
+		const configLockPath = path.join(this.options.rootPath, 'package-lock.json');
+		const configLockContents = fs.readJSONSync(configLockPath);
+		const dependencies = this.options.dependencies || [];
+
+		for (const dependency of dependencies) {
+			const dependencyVersion = configLockContents.dependencies[dependency].version;
+			const dependencyVersionPath = path.join(this.options.packagesPath, dependency, dependencyVersion);
+			if (!fs.existsSync(dependencyVersionPath)) {
+				const fileName = execSync(`npm pack ${dependency}@${dependencyVersion}`).toString();
+				fs.moveSync(path.join(this.options.rootPath, fileName), path.join(this.options.packagesPath, dependency, fileName));
+			}
+		}
 	}
 }
