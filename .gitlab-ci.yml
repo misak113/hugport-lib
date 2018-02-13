@@ -29,8 +29,11 @@ build:
     - yarn run prepublish --production
     - npm set ${NPM_REGISTRY_URL/#*:/}:_authToken=$NPM_AUTH_TOKEN
     - npm publish --ignore-scripts --tag $TAG
-    - git config user.email "$GITLAB_USER_EMAIL"
-    - git config user.name "$GITLAB_USER_EMAIL"
-    - git remote set-url origin ${CI_REPOSITORY_URL/"gitlab-ci-token:$CI_JOB_TOKEN"/"$CI_REPOSITORY_PUSH_USERNAME:$CI_REPOSITORY_PUSH_TOKEN"}
-    - git tag v${VERSION} -a -m "$(git log --pretty="%s" `git describe --abbrev=0 --tags`...HEAD)"
-    - git push --tags
+    - >
+      if [ "$CI_COMMIT_REF_NAME" == "master" ]; then
+        git config user.email "$GITLAB_USER_EMAIL"
+        git config user.name "$GITLAB_USER_EMAIL"
+        git remote set-url origin ${CI_REPOSITORY_URL/"gitlab-ci-token:$CI_JOB_TOKEN"/"$CI_REPOSITORY_PUSH_USERNAME:$CI_REPOSITORY_PUSH_TOKEN"}
+        git tag v${VERSION} -a -m "$(git log --pretty="%s" `git describe --abbrev=0 --tags`...HEAD)"
+        git push origin refs/tags/v${VERSION}
+      fi
