@@ -1,11 +1,11 @@
 
 import * as moment from 'moment';
 
-export function now(timezone?: number) {
-	if (!timezone) {
-		timezone = getCurrentTimezone();
+export function now(timezoneOffsetHours?: number) {
+	if (!timezoneOffsetHours) {
+		timezoneOffsetHours = getCurrentTimezone();
 	}
-	return moment().subtract(getCurrentTimezone(), 'hour').add(timezone, 'hour');
+	return moment().subtract(getCurrentTimezone(), 'hour').add(timezoneOffsetHours, 'hour');
 }
 
 export function getCurrentTimezone() {
