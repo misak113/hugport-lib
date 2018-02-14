@@ -15,9 +15,10 @@
         "noUnusedParameters": true,
         "noUnusedLocals": true,
         "typeRoots": [
-            "node_modules/@types/"
+            "node_modules/@types/",
+            "libs/"
         ],
-        "lib": ["esnext"]
+        "lib": ["dom", "es5", "scripthost", "esnext"]
     },
     "include": [
         "src/**/*.ts",

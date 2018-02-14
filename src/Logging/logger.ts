@@ -1,4 +1,3 @@
-/// <reference path="../../libs/raven/raven-node.d.ts" />
 
 import * as Raven from 'raven';
 
@@ -36,7 +35,9 @@ export function useRavenLogging() {
 	};
 }
 
-function captureRaven(level: string, source: string, message: any, ...optionalParams: any[]) {
+export type LogLevel = "critical" | "error" | "warn" | "warning" | "info" | "debug";
+
+function captureRaven(level: LogLevel, source: string, message: any, ...optionalParams: any[]) {
 	const options = {
 		level,
 		tags: {

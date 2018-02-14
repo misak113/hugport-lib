@@ -1,5 +1,5 @@
 
-export default function* asyncIterator<T>(collection: Promise<T[]>): IterableIterator<Promise<T>> {
+export default function* asyncIterator<T>(collection: Promise<T[]>): IterableIterator<Promise<T | undefined>> {
 	let length: number = 1;
 	collection = collection.then(function(items: T[]): T[] {
 		if (items) {
