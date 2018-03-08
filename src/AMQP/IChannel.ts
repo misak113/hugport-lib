@@ -1,5 +1,6 @@
 
 import IMessageOptions from './IMessageOptions';
+import IConsumeOptions from './IConsumeOptions';
 
 export type ICancelConsumption = () => Promise<void>;
 
@@ -10,6 +11,7 @@ interface IChannel<TMessage> {
 	consumeSimple(
 		queueName: string,
 		onMessage: (message: any) => Promise<void>,
+		consumeOptions?: IConsumeOptions,
 		onEnded?: () => void,
 	): Promise<ICancelConsumption>;
 	consume<TResponseMessage>(
@@ -20,6 +22,7 @@ interface IChannel<TMessage> {
 			nack: () => void
 		) => Promise<TResponseMessage>,
 		respond: boolean,
+		consumeOptions?: IConsumeOptions,
 		onEnded?: () => void
 	): Promise<ICancelConsumption>;
 }
