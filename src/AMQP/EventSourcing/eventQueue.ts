@@ -29,9 +29,10 @@ export async function bindMore<TPayload extends IEventPayload>(
 	eventTypes: string[],
 	consumerType: string,
 	onEvent: (event: IEvent<TPayload>) => Promise<void>,
+	persistent: boolean = true,
 ) {
 	for (let eventType of eventTypes) {
-		await bindOne(amqpConnection, eventType, consumerType, onEvent);
+		await bindOne(amqpConnection, eventType, consumerType, onEvent, persistent);
 	}
 }
 
@@ -40,9 +41,12 @@ export async function bindOne<TPayload extends IEventPayload>(
 	eventType: string,
 	consumerType: string,
 	onEvent: (event: IEvent<TPayload>) => Promise<void>,
+	persistent: boolean = true,
 ) {
 	const queueName = getQueueName(consumerType, eventType);
-	return await amqpConnection.queueSubscriber.subscribeRepeatable(queueName, onEvent, eventType, EXCHANGE_NAME, OPTIONS);
+	return await amqpConnection.queueSubscriber.subscribeRepeatable(queueName, onEvent, eventType, EXCHANGE_NAME, OPTIONS, {
+		persistent,
+	});
 }
 
 export async function bindOneExpectingConfirmation<TPayload extends IEventPayload>(
@@ -50,6 +54,7 @@ export async function bindOneExpectingConfirmation<TPayload extends IEventPayloa
 	eventType: string,
 	consumerType: string,
 	onEvent: (event: IEvent<TPayload>, ack: () => void, nack: (options?: INackOptions) => void) => Promise<void>,
+	persistent: boolean = true,
 ) {
 	const queueName = getQueueName(consumerType, eventType);
 	return await amqpConnection.queueSubscriber.subscribeExpectingConfirmationRepeatable(
@@ -58,6 +63,7 @@ export async function bindOneExpectingConfirmation<TPayload extends IEventPayloa
 		eventType,
 		EXCHANGE_NAME,
 		OPTIONS,
+		{ persistent },
 	);
 }
 

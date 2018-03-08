@@ -1,5 +1,6 @@
 
 import IQueueOptions from './IQueueOptions';
+import IConsumeOptions from './IConsumeOptions';
 import INackOptions from './INackOptions';
 import { ICancelConsumption } from './IChannel';
 
@@ -10,6 +11,7 @@ interface IUnsubscribedMessage {
 	routingKey: string;
 	exchangeName?: string;
 	options: IQueueOptions;
+	consumeOptions: IConsumeOptions;
 	resolve: (cancelConsumption: ICancelConsumption) => void;
 	confirmationWaiting: boolean;
 }

@@ -12,6 +12,7 @@ import IChannel from './IChannel';
 import IAMQPPool from './IAMQPPool';
 import IQueueOptions from './IQueueOptions';
 import IMessageOptions from './IMessageOptions';
+import IConsumeOptions from './IConsumeOptions';
 import INackOptions from './INackOptions';
 import * as Debug from 'debug';
 import {
@@ -86,7 +87,12 @@ export default class ChannelProvider {
 				}
 				return response;
 			},
-			consumeSimple: async (queueName: string, onMessage: (message: any) => Promise<any>, onEnded?: () => void) => {
+			consumeSimple: async (
+				queueName: string,
+				onMessage: (message: any) => Promise<any>,
+				consumeOptions: IConsumeOptions = {},
+				onEnded?: () => void,
+			) => {
 				return await channel.consume(
 					queueName,
 					async (message: any, ack: () => void, nack: (options?: INackOptions) => void) => {
@@ -100,6 +106,7 @@ export default class ChannelProvider {
 						}
 					},
 					false,
+					consumeOptions,
 					onEnded,
 				);
 			},
@@ -111,6 +118,7 @@ export default class ChannelProvider {
 					nack: (options?: INackOptions) => void
 				) => Promise<any>,
 				respond: boolean,
+				consumeOptions: IConsumeOptions = {},
 				onEnded?: () => void
 			) => {
 				if (exchangeName === '' && queueName !== routingKey) {
@@ -136,7 +144,7 @@ export default class ChannelProvider {
 				});
 				await amqplibChannel.prefetch(options.prefetchCount || DEFAULT_PREFETCH_COUNT);
 				await this.assertExchange(amqplibChannel, exchangeName, 'direct');
-				await this.assertRejectableQueue(amqplibChannel, queueName, options.maxPriority);
+				await this.assertRejectableQueue(amqplibChannel, queueName, options.maxPriority, consumeOptions.persistent);
 				await this.bindQueue(amqplibChannel, queueName, exchangeName, routingKey);
 				const { consumerTag } = await amqplibChannel.consume(queueName, async (amqplibMessage: AmqplibMessage) => {
 					const message = this.decodeMessageBuffer(amqplibMessage.content);
@@ -304,11 +312,17 @@ export default class ChannelProvider {
 		}
 	}
 
-	private async assertRejectableQueue(amqplibChannel: AmqplibChannel, queueName: string, maxPriority: number | undefined) {
+	private async assertRejectableQueue(
+		amqplibChannel: AmqplibChannel,
+		queueName: string,
+		maxPriority: number | undefined,
+		persistent: boolean = true,
+	) {
 		return await amqplibChannel.assertQueue(queueName, {
 			deadLetterExchange: '',
 			deadLetterRoutingKey: REJECTED_QUEUE_PREFIX + queueName,
 			maxPriority,
+			autoDelete: !persistent,
 		});
 	}
 
