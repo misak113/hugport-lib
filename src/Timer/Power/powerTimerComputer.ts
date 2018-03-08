@@ -1,5 +1,5 @@
 
-import * as moment from 'moment';
+import * as moment from 'moment-timezone';
 import PowerTimerSettings from './PowerTimerSettings';
 import PowerTimerType from './PowerTimerType';
 import PowerTimerWeekday from './PowerTimerWeekday';

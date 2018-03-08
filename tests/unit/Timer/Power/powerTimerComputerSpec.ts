@@ -1,6 +1,6 @@
 
 import * as assert from 'assert';
-import * as moment from 'moment';
+import * as moment from 'moment-timezone';
 import TimerSettings from '../../../../src/Timer/Power/PowerTimerSettings';
 import {
 	shouldBeOnByTimers,

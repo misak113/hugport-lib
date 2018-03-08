@@ -3,7 +3,7 @@ import * as azureStorage from 'azure-storage';
 import { BlobService, common } from 'azure-storage';
 import { promisify } from 'util';
 import { padLeft } from '../String/pad';
-import * as moment from 'moment';
+import * as moment from 'moment-timezone';
 import * as _ from 'lodash';
 
 export async function deleteOldFilesByPrefixInChunks(
