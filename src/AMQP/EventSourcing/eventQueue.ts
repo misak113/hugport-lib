@@ -12,7 +12,11 @@ const OPTIONS = {
 };
 
 export async function enqueue(amqpConnection: IAMQPConnection, event: IEvent<IEventPayload>) {
-	await amqpConnection.queuePublisher.enqueueRepeatable(event, event.type, EXCHANGE_NAME, OPTIONS);
+	await amqpConnection.queuePublisher.enqueueRepeatable(event, getBasicEventRoutingKey(event.type), EXCHANGE_NAME, OPTIONS);
+}
+
+export async function enqueueForDevice(amqpConnection: IAMQPConnection, event: IEvent<IEventPayload>, deviceUid: string) {
+	await amqpConnection.queuePublisher.enqueueRepeatable(event, getDeviceEventRoutingKey(event.type, deviceUid), EXCHANGE_NAME, OPTIONS);
 }
 
 export async function fetchNext<TPayload extends IEventPayload>(
@@ -21,7 +25,7 @@ export async function fetchNext<TPayload extends IEventPayload>(
 	consumerType: string,
 ): Promise<IEvent<TPayload> | null> {
 	const queueName = getQueueName(consumerType, eventType);
-	return await fetchNextMessage<IEvent<TPayload> | null>(amqpConnection, queueName, eventType, EXCHANGE_NAME);
+	return await fetchNextMessage<IEvent<TPayload> | null>(amqpConnection, queueName, getBasicEventRoutingKey(eventType), EXCHANGE_NAME);
 }
 
 export async function bindMore<TPayload extends IEventPayload>(
@@ -44,9 +48,14 @@ export async function bindOne<TPayload extends IEventPayload>(
 	persistent: boolean = true,
 ) {
 	const queueName = getQueueName(consumerType, eventType);
-	return await amqpConnection.queueSubscriber.subscribeRepeatable(queueName, onEvent, eventType, EXCHANGE_NAME, OPTIONS, {
-		persistent,
-	});
+	return await amqpConnection.queueSubscriber.subscribeRepeatable(
+		queueName,
+		onEvent,
+		getBasicEventRoutingKey(eventType),
+		EXCHANGE_NAME,
+		OPTIONS,
+		{ persistent },
+	);
 }
 
 export async function bindOneExpectingConfirmation<TPayload extends IEventPayload>(
@@ -60,7 +69,26 @@ export async function bindOneExpectingConfirmation<TPayload extends IEventPayloa
 	return await amqpConnection.queueSubscriber.subscribeExpectingConfirmationRepeatable(
 		queueName,
 		onEvent,
-		eventType,
+		getBasicEventRoutingKey(eventType),
+		EXCHANGE_NAME,
+		OPTIONS,
+		{ persistent },
+	);
+}
+
+export async function bindOneForDeviceExpectingConfirmation<TPayload extends IEventPayload>(
+	amqpConnection: IAMQPConnection,
+	eventType: string,
+	consumerType: string,
+	deviceUid: string,
+	onEvent: (event: IEvent<TPayload>, ack: () => void, nack: (options?: INackOptions) => void) => Promise<void>,
+	persistent: boolean = true,
+) {
+	const queueName = getDeviceQueueName(consumerType, eventType);
+	return await amqpConnection.queueSubscriber.subscribeExpectingConfirmationRepeatable(
+		queueName,
+		onEvent,
+		getDeviceEventRoutingKey(eventType, deviceUid),
 		EXCHANGE_NAME,
 		OPTIONS,
 		{ persistent },
@@ -80,4 +108,20 @@ export async function purgeMore(
 
 function getQueueName(consumerType: string, eventType: string) {
 	return consumerType + '_' + eventType;
+}
+
+function getDeviceQueueName(consumerType: string, eventType: string) {
+	return getQueueName(consumerType, eventType) + "_device";
+}
+
+function escapeEventTypeForRoutingKey(eventType: string) {
+	return eventType.replace(/\./g, "_");
+}
+
+function getBasicEventRoutingKey(eventType: string) {
+	return "event." + escapeEventTypeForRoutingKey(eventType);
+}
+
+function getDeviceEventRoutingKey(eventType: string, deviceUid: string) {
+	return "device." + escapeEventTypeForRoutingKey(eventType) + "." + deviceUid;
 }
