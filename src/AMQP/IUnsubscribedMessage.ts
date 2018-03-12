@@ -10,6 +10,7 @@ interface IUnsubscribedMessage {
 	onMessage: (message: any, ack?: () => void, nack?: (options?: INackOptions) => void) => Promise<any>;
 	routingKey: string;
 	exchangeName?: string;
+	alternateExchangeName?: string;
 	options: IQueueOptions;
 	consumeOptions: IConsumeOptions;
 	resolve: (cancelConsumption: ICancelConsumption) => void;

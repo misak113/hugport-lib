@@ -39,13 +39,16 @@ export default class ChannelProvider {
 		routingKey: string,
 		exchangeName: string = '',
 		options: IQueueOptions = {},
+		alternateExchangeName?: string,
 	): Promise<IChannel<any>> {
 		const amqplibConnection = await this.getAmqplibConnection();
 		const channel = {
 			send: async (message: any, messageOptions: IMessageOptions = {}) => {
 				const encodedMessageBuffer = this.encodeMessageIntoBuffer(message);
 				const amqplibSendOptions = this.createAmqplibSendOptions(options, messageOptions);
-				await this.publish(amqplibConnection, exchangeName, routingKey, encodedMessageBuffer, amqplibSendOptions, options);
+				await this.publish(
+					amqplibConnection, exchangeName, routingKey, encodedMessageBuffer, amqplibSendOptions, options, alternateExchangeName,
+				);
 			},
 			sendExpectingResponse: async <TResponseMessage>(message: any, messageOptions: IMessageOptions = {}) => {
 				const encodedMessageBuffer = this.encodeMessageIntoBuffer(message);
@@ -60,7 +63,9 @@ export default class ChannelProvider {
 					correlationId,
 					replyTo: responseQueueName,
 				};
-				const sentPromise = this.publish(amqplibConnection, exchangeName, routingKey, encodedMessageBuffer, amqplibSendOptions, options);
+				const sentPromise = this.publish(
+					amqplibConnection, exchangeName, routingKey, encodedMessageBuffer, amqplibSendOptions, options, alternateExchangeName,
+				);
 				const responsePromise = new Promise(
 					async (resolve: (responseMessage: TResponseMessage) => void) => {
 						await amqplibResponseChannel.prefetch(1);
@@ -143,7 +148,7 @@ export default class ChannelProvider {
 					}
 				});
 				await amqplibChannel.prefetch(options.prefetchCount || DEFAULT_PREFETCH_COUNT);
-				await this.assertExchange(amqplibChannel, exchangeName, 'direct');
+				await this.assertExchange(amqplibChannel, exchangeName, "topic", alternateExchangeName);
 				await this.assertRejectableQueue(amqplibChannel, queueName, options.maxPriority, consumeOptions.persistent);
 				await this.bindQueue(amqplibChannel, queueName, exchangeName, routingKey);
 				const { consumerTag } = await amqplibChannel.consume(queueName, async (amqplibMessage: AmqplibMessage) => {
@@ -240,12 +245,13 @@ export default class ChannelProvider {
 		encodedMessageBuffer: Buffer,
 		sendOptions: AmqplibOptions.Publish,
 		options: IQueueOptions,
+		alternateExchangeName?: string,
 	) {
 		const channelIdentificator = this.getExchangeChannelIdentifier(exchangeName, routingKey);
 
 		if (options.confirmable) {
 			const amqplibChannel = await this.getAmqplibConfirmChannel(amqplibConnection, channelIdentificator);
-			await this.assertExchange(amqplibChannel, exchangeName, 'direct');
+			await this.assertExchange(amqplibChannel, exchangeName, "topic", alternateExchangeName);
 			await new Promise((resolve: () => void, reject: (error: Error) => void) => amqplibChannel.publish(
 				exchangeName,
 				routingKey,
@@ -255,7 +261,7 @@ export default class ChannelProvider {
 			));
 		} else {
 			const amqplibChannel = await this.getAmqplibChannel(amqplibConnection, channelIdentificator);
-			await this.assertExchange(amqplibChannel, exchangeName, 'direct');
+			await this.assertExchange(amqplibChannel, exchangeName, "topic", alternateExchangeName);
 			amqplibChannel.publish(
 				exchangeName,
 				routingKey,
@@ -309,9 +315,16 @@ export default class ChannelProvider {
 		return exchangeName + '_' + routingKey;
 	}
 
-	private async assertExchange(amqplibChannel: AmqplibChannel, exchangeName: string, type: ExchangeType) {
+	private async assertExchange(amqplibChannel: AmqplibChannel, exchangeName: string, type: ExchangeType, alternateExchangeName?: string) {
 		if (exchangeName !== '') {
-			await amqplibChannel.assertExchange(exchangeName, type);
+			if (typeof alternateExchangeName !== "undefined" && alternateExchangeName !== "") {
+				await amqplibChannel.assertExchange(alternateExchangeName, type);
+				await amqplibChannel.assertExchange(exchangeName, type, {
+					alternateExchange: alternateExchangeName,
+				});
+			} else {
+				await amqplibChannel.assertExchange(exchangeName, type);
+			}
 		}
 	}
 

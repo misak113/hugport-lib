@@ -5,6 +5,7 @@ import INackOptions from '../INackOptions';
 import IEvent, { IEventPayload } from './IEvent';
 
 const EXCHANGE_NAME = 'events';
+const FAILED_EXCHANGE_NAME = "events_failed";
 const OPTIONS = {
 	persistent: true,
 	confirmable: true,
@@ -12,11 +13,22 @@ const OPTIONS = {
 };
 
 export async function enqueue(amqpConnection: IAMQPConnection, event: IEvent<IEventPayload>) {
-	await amqpConnection.queuePublisher.enqueueRepeatable(event, getBasicEventRoutingKey(event.type), EXCHANGE_NAME, OPTIONS);
+	await amqpConnection.queuePublisher.enqueueRepeatable(
+		event,
+		getBasicEventRoutingKey(event.type),
+		EXCHANGE_NAME,
+		FAILED_EXCHANGE_NAME,
+		OPTIONS);
 }
 
 export async function enqueueForDevice(amqpConnection: IAMQPConnection, event: IEvent<IEventPayload>, deviceUid: string) {
-	await amqpConnection.queuePublisher.enqueueRepeatable(event, getDeviceEventRoutingKey(event.type, deviceUid), EXCHANGE_NAME, OPTIONS);
+	await amqpConnection.queuePublisher.enqueueRepeatable(
+		event,
+		getDeviceEventRoutingKey(event.type, deviceUid),
+		EXCHANGE_NAME,
+		FAILED_EXCHANGE_NAME,
+		OPTIONS,
+	);
 }
 
 export async function fetchNext<TPayload extends IEventPayload>(
@@ -25,7 +37,43 @@ export async function fetchNext<TPayload extends IEventPayload>(
 	consumerType: string,
 ): Promise<IEvent<TPayload> | null> {
 	const queueName = getQueueName(consumerType, eventType);
-	return await fetchNextMessage<IEvent<TPayload> | null>(amqpConnection, queueName, getBasicEventRoutingKey(eventType), EXCHANGE_NAME);
+	return await fetchNextMessage<IEvent<TPayload> | null>(
+		amqpConnection,
+		queueName,
+		getBasicEventRoutingKey(eventType),
+		EXCHANGE_NAME,
+		FAILED_EXCHANGE_NAME,
+	);
+}
+
+export async function fetchNextForDevice<TPayload extends IEventPayload>(
+	amqpConnection: IAMQPConnection,
+	eventType: string,
+	consumerType: string,
+	deviceUid: string,
+): Promise<IEvent<TPayload> | null> {
+	const queueName = getDeviceQueueName(consumerType, eventType);
+	return await fetchNextMessage<IEvent<TPayload> | null>(
+		amqpConnection,
+		queueName,
+		getDeviceEventRoutingKey(eventType, deviceUid),
+		EXCHANGE_NAME,
+		FAILED_EXCHANGE_NAME,
+	);
+}
+
+export async function fetchNextFailedForDevice<TPayload extends IEventPayload>(
+	amqpConnection: IAMQPConnection,
+	eventType: string,
+	consumerType: string,
+): Promise<IEvent<TPayload> | null> {
+	const queueName = getFailedDeviceQueueName(consumerType, eventType);
+	return await fetchNextMessage<IEvent<TPayload> | null>(
+		amqpConnection,
+		queueName,
+		getDeviceEventRoutingKey(eventType, "*"),
+		FAILED_EXCHANGE_NAME,
+	);
 }
 
 export async function bindMore<TPayload extends IEventPayload>(
@@ -53,6 +101,7 @@ export async function bindOne<TPayload extends IEventPayload>(
 		onEvent,
 		getBasicEventRoutingKey(eventType),
 		EXCHANGE_NAME,
+		FAILED_EXCHANGE_NAME,
 		OPTIONS,
 		{ persistent },
 	);
@@ -71,6 +120,7 @@ export async function bindOneExpectingConfirmation<TPayload extends IEventPayloa
 		onEvent,
 		getBasicEventRoutingKey(eventType),
 		EXCHANGE_NAME,
+		FAILED_EXCHANGE_NAME,
 		OPTIONS,
 		{ persistent },
 	);
@@ -90,6 +140,26 @@ export async function bindOneForDeviceExpectingConfirmation<TPayload extends IEv
 		onEvent,
 		getDeviceEventRoutingKey(eventType, deviceUid),
 		EXCHANGE_NAME,
+		FAILED_EXCHANGE_NAME,
+		OPTIONS,
+		{ persistent },
+	);
+}
+
+export async function bindOneFailedForDeviceExpectingConfirmation<TPayload extends IEventPayload>(
+	amqpConnection: IAMQPConnection,
+	eventType: string,
+	consumerType: string,
+	onEvent: (event: IEvent<TPayload>, ack: () => void, nack: (options?: INackOptions) => void) => Promise<void>,
+	persistent: boolean = true,
+) {
+	const queueName = getFailedDeviceQueueName(consumerType, eventType);
+	return await amqpConnection.queueSubscriber.subscribeExpectingConfirmationRepeatable(
+		queueName,
+		onEvent,
+		getDeviceEventRoutingKey(eventType, "*"), // bind all devices
+		FAILED_EXCHANGE_NAME,
+		undefined,
 		OPTIONS,
 		{ persistent },
 	);
@@ -103,6 +173,10 @@ export async function purgeMore(
 	for (let eventType of eventTypes) {
 		/* tslint:disable-next-line */
 		while (await fetchNext(amqpConnection, eventType, consumerType)) ;
+		/* tslint:disable-next-line */
+		while (await fetchNextForDevice(amqpConnection, eventType, consumerType, "*")) ;
+		/* tslint:disable-next-line */
+		while (await fetchNextFailedForDevice(amqpConnection, eventType, consumerType)) ;
 	}
 }
 
@@ -112,6 +186,10 @@ function getQueueName(consumerType: string, eventType: string) {
 
 function getDeviceQueueName(consumerType: string, eventType: string) {
 	return getQueueName(consumerType, eventType) + "_device";
+}
+
+function getFailedDeviceQueueName(consumerType: string, eventType: string) {
+	return getDeviceQueueName(consumerType, eventType) + "_failed";
 }
 
 function escapeEventTypeForRoutingKey(eventType: string) {

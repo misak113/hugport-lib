@@ -8,6 +8,7 @@ import {
 	bindOne,
 	bindOneExpectingConfirmation,
 	bindOneForDeviceExpectingConfirmation,
+	bindOneFailedForDeviceExpectingConfirmation,
 	purgeMore,
 } from '../../../../src/AMQP/EventSourcing/eventQueue';
 import waitUntil from '../../../../src/DateTime/waitUntil';
@@ -41,11 +42,13 @@ describe('AMQP.EventSourcing.eventQueue', function () {
 		it('should send event to an exchange defined by destination with a given routing key', async function () {
 			const channel = await this.amqplibConnection.createChannel();
 			await channel.deleteExchange('events');
+			await channel.deleteExchange('events_failed');
 			await channel.deleteQueue('consumer1_event1');
 			await channel.deleteQueue('consumer1_event2');
 			await channel.deleteQueue('consumer2_event1');
 			await channel.deleteQueue('consumer3_event2');
-			await channel.assertExchange('events', 'direct');
+			await channel.assertExchange('events_failed', "topic");
+			await channel.assertExchange('events', "topic", { alternateExchange: "events_failed" });
 			await channel.assertQueue('consumer1_event1');
 			await channel.assertQueue('consumer1_event2');
 			await channel.assertQueue('consumer2_event1');
@@ -93,12 +96,13 @@ describe('AMQP.EventSourcing.eventQueue', function () {
 		it("should send event to an exchange defined by destination with a given routing key", async function () {
 			const channel = await this.amqplibConnection.createChannel();
 			await channel.deleteExchange("events");
+			await channel.deleteExchange("events_failed");
 			await channel.deleteQueue("consumer1_event1");
 			await channel.deleteQueue("consumer1_event2");
 			await channel.deleteQueue("consumer2_event1");
 			await channel.deleteQueue("consumer3_event2");
-			await channel.assertExchange("events_failed", "direct");
-			await channel.assertExchange("events", "direct", { alternateExchange: "events_failed" });
+			await channel.assertExchange("events_failed", "topic");
+			await channel.assertExchange("events", "topic", { alternateExchange: "events_failed" });
 			await channel.assertQueue("consumer1_event1");
 			await channel.assertQueue("consumer1_event2");
 			await channel.assertQueue("consumer2_event1");
@@ -159,6 +163,35 @@ describe('AMQP.EventSourcing.eventQueue', function () {
 				receivedAt: new Date(2018, 0, 1).toISOString(),
 			});
 		});
+
+		it("should send event to an alternate exchange", async function () {
+			const channel = await this.amqplibConnection.createChannel();
+			await channel.deleteExchange("events_failed");
+			await channel.deleteExchange("events");
+			await channel.assertExchange("events_failed", "topic");
+			await channel.assertExchange("events", "topic", { alternateExchange: "events_failed" });
+			await channel.assertQueue("consumer1_event1");
+			await channel.assertQueue("consumer1_event2");
+			await channel.bindQueue("consumer1_event1", "events_failed", "device.event1.*");
+			await channel.bindQueue("consumer1_event2", "events_failed", "device.event2.*");
+
+			await enqueueForDevice(amqpConnection, createEvent("event1", 1), "1");
+			await enqueueForDevice(amqpConnection, createEvent("event2", 2), "2");
+
+			const result1 = await channel.get("consumer1_event1");
+			JSON.parse(result1!.content.toString()).should.deepEqual({
+				...createEvent("event1", 1),
+				dispatchedAt: new Date(2018, 0, 1).toISOString(),
+				receivedAt: new Date(2018, 0, 1).toISOString(),
+			});
+
+			const result2 = await channel.get("consumer1_event2");
+			JSON.parse(result2!.content.toString()).should.deepEqual({
+				...createEvent("event2", 2),
+				dispatchedAt: new Date(2018, 0, 1).toISOString(),
+				receivedAt: new Date(2018, 0, 1).toISOString(),
+			});
+		});
 	});
 
 	describe('fetchNext', function () {
@@ -166,11 +199,13 @@ describe('AMQP.EventSourcing.eventQueue', function () {
 		it('should fetch next enqueued event', async function () {
 			const channel = await this.amqplibConnection.createChannel();
 			await channel.deleteExchange('events');
+			await channel.deleteExchange('events_failed');
 			await channel.deleteQueue('consumer1_event1');
 			await channel.deleteQueue('consumer1_event2');
 			await channel.deleteQueue('consumer2_event1');
 			await channel.deleteQueue('consumer3_event2');
-			await channel.assertExchange('events', 'direct');
+			await channel.assertExchange('events_failed', "topic");
+			await channel.assertExchange('events', "topic", { alternateExchange: "events_failed" });
 			await channel.assertQueue('consumer1_event1', {
 				deadLetterExchange: '',
 				deadLetterRoutingKey: '__rejected.consumer1_event1',
@@ -215,11 +250,13 @@ describe('AMQP.EventSourcing.eventQueue', function () {
 		it('should call given callback everytime a specified event is enqueued for a specified destination', async function () {
 			const channel = await this.amqplibConnection.createChannel();
 			await channel.deleteExchange('events');
+			await channel.deleteExchange('events_failed');
 			await channel.deleteQueue('consumer1_event1');
 			await channel.deleteQueue('consumer1_event2');
 			await channel.deleteQueue('consumer2_event1');
 			await channel.deleteQueue('consumer3_event2');
-			await channel.assertExchange('events', 'direct');
+			await channel.assertExchange('events_failed', "topic");
+			await channel.assertExchange('events', "topic", { alternateExchange: "events_failed" });
 
 			const callbackD1C1E1 = sinon.spy();
 			const callbackD1C1E2 = sinon.spy();
@@ -256,13 +293,15 @@ describe('AMQP.EventSourcing.eventQueue', function () {
 		it('should call given callback on specified event enqueued and send response message, returned by the callback', async function () {
 			const channel = await this.amqplibConnection.createChannel();
 			await channel.deleteExchange('events');
+			await channel.deleteExchange('events_failed');
 			await channel.deleteQueue('consumer1_event1');
 			await channel.deleteQueue('consumer1_event2');
 			await channel.deleteQueue('consumer2_event1');
 			await channel.deleteQueue('replyQueue1');
 			await channel.deleteQueue('replyQueue2');
 			await channel.deleteQueue('replyQueue3');
-			await channel.assertExchange('events', 'direct');
+			await channel.assertExchange('events_failed', "topic");
+			await channel.assertExchange('events', "topic", { alternateExchange: "events_failed" });
 
 			const callback1 = sinon.stub().callsArg(1).resolves();
 			const callback2 = sinon.stub().callsArg(1).resolves();
@@ -316,6 +355,7 @@ describe('AMQP.EventSourcing.eventQueue', function () {
 		it("should call given callback on specified event enqueued and send response message, returned by the callback", async function () {
 			const channel = await this.amqplibConnection.createChannel();
 			await channel.deleteExchange("events");
+			await channel.deleteExchange("events_failed");
 			await channel.deleteQueue("consumer1_event1_device");
 			await channel.deleteQueue("consumer1_event2_device");
 			await channel.deleteQueue("consumer2_event1_device");
@@ -326,7 +366,8 @@ describe('AMQP.EventSourcing.eventQueue', function () {
 			await channel.deleteQueue("replyQueue21");
 			await channel.deleteQueue("replyQueue22");
 			await channel.deleteQueue("replyQueue23");
-			await channel.assertExchange("events", "direct");
+			await channel.assertExchange('events_failed', "topic");
+			await channel.assertExchange("events", "topic", { alternateExchange: "events_failed" });
 
 			const callback11 = sinon.stub().callsArg(1).resolves();
 			const callback12 = sinon.stub().callsArg(1).resolves();
@@ -417,14 +458,62 @@ describe('AMQP.EventSourcing.eventQueue', function () {
 		});
 	});
 
+	describe("bindOneFailedForDeviceExpectingConfirmation", function () {
+
+		it("should call given callback on specified event enqueued and send response message, returned by the callback", async function () {
+			const channel = await this.amqplibConnection.createChannel();
+			await channel.deleteExchange("events");
+			await channel.deleteExchange("events_failed");
+			await channel.deleteQueue("consumer1_event1_device_failed");
+			await channel.deleteQueue("consumer1_event2_device_failed");
+			await channel.deleteQueue("replyQueue1");
+			await channel.deleteQueue("replyQueue2");
+			await channel.assertExchange("events_failed", "topic");
+			await channel.assertExchange("events", "topic", { alternateExchange: "events_failed" });
+
+			const callback1 = sinon.stub().callsArg(1).resolves();
+			const callback2 = sinon.stub().callsArg(1).resolves();
+
+			const cancel1 = await bindOneFailedForDeviceExpectingConfirmation(amqpConnection, "event1", "consumer1", callback1);
+			const cancel2 = await bindOneFailedForDeviceExpectingConfirmation(amqpConnection, "event2", "consumer1", callback2);
+
+			channel.publish(
+				"events",
+				"device.event1.1",
+				new Buffer(JSON.stringify({ a: 1 })),
+				{ replyTo: "replyQueue1", correlationId: "test1" },
+			);
+			await waitUntil(async () => callback1.calledOnce);
+			const response1 = await channel.get("replyQueue1");
+			should(response1).not.be.false();
+			response1!.properties.correlationId.should.equal("test1");
+
+			channel.publish(
+				"events",
+				"device.event2.2",
+				new Buffer(JSON.stringify({ a: 2 })),
+				{ replyTo: "replyQueue2", correlationId: "test2" },
+			);
+			await waitUntil(async () => callback2.calledOnce);
+			const response2 = await channel.get("replyQueue2");
+			should(response2).not.be.false();
+			response2!.properties.correlationId.should.equal("test2");
+
+			await cancel1();
+			await cancel2();
+		});
+	});
+
 	describe('purgeMore', function () {
 
 		it('should purge all events of given types from given destination for a given consumer type', async function () {
 			const channel = await this.amqplibConnection.createChannel();
 			await channel.deleteExchange('events');
+			await channel.deleteExchange('events_failed');
 			await channel.deleteQueue('consumer1_event1');
 			await channel.deleteQueue('consumer2_event1');
-			await channel.assertExchange('events', 'direct');
+			await channel.assertExchange('events_failed', "topic");
+			await channel.assertExchange('events', "topic", { alternateExchange: "events_failed" });
 			await channel.assertQueue('consumer1_event1', {
 				deadLetterExchange: '',
 				deadLetterRoutingKey: '__rejected.consumer1_event1',

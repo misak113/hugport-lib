@@ -34,8 +34,8 @@ describe('AMQP.ChannelProvider', function () {
 			await rawTestChannel.deleteQueue('queue3');
 			await rawTestChannel.deleteQueue('queue4');
 			await rawTestChannel.deleteQueue('queue5');
-			await rawTestChannel.assertExchange('exchange1', 'direct');
-			await rawTestChannel.assertExchange('exchange2', 'direct');
+			await rawTestChannel.assertExchange('exchange1', 'topic');
+			await rawTestChannel.assertExchange('exchange2', 'topic');
 			await rawTestChannel.assertQueue('queue1');
 			await rawTestChannel.assertQueue('queue2');
 			await rawTestChannel.assertQueue('queue3');
@@ -88,8 +88,8 @@ describe('AMQP.ChannelProvider', function () {
 			await rawTestChannel.deleteQueue('queue2');
 			await rawTestChannel.deleteQueue('queue3');
 			await rawTestChannel.deleteQueue('queue4');
-			await rawTestChannel.assertExchange('exchange1', 'direct');
-			await rawTestChannel.assertExchange('exchange2', 'direct');
+			await rawTestChannel.assertExchange('exchange1', 'topic');
+			await rawTestChannel.assertExchange('exchange2', 'topic');
 			await rawTestChannel.assertQueue('queue1');
 			await rawTestChannel.assertQueue('queue2');
 			await rawTestChannel.assertQueue('queue3');
@@ -134,8 +134,8 @@ describe('AMQP.ChannelProvider', function () {
 			await consumeCallback('queue1', { message: 1 }, () => done1 = true);
 			await consumeCallback('queue2', { message: 1 }, () => done2 = true);
 
-			await rawTestChannel.assertExchange('exchange1', 'direct');
-			await rawTestChannel.assertExchange('exchange2', 'direct');
+			await rawTestChannel.assertExchange('exchange1', 'topic');
+			await rawTestChannel.assertExchange('exchange2', 'topic');
 			rawTestChannel.publish('exchange2', 'route1', new Buffer(JSON.stringify({ message: 3 })));
 			rawTestChannel.publish('exchange1', 'route2', new Buffer(JSON.stringify({ message: 2 })));
 			rawTestChannel.publish('exchange1', 'route1', new Buffer(JSON.stringify({ message: 1 })));
@@ -166,8 +166,8 @@ describe('AMQP.ChannelProvider', function () {
 					true,
 				);
 
-				await rawTestChannel.assertExchange('exchange1', 'direct');
-				await rawTestChannel.assertExchange('exchange2', 'direct');
+				await rawTestChannel.assertExchange('exchange1', 'topic');
+				await rawTestChannel.assertExchange('exchange2', 'topic');
 				rawTestChannel.publish(
 					'exchange2',
 					'route1',
