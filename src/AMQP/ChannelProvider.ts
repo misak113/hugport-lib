@@ -149,7 +149,13 @@ export default class ChannelProvider {
 				});
 				await amqplibChannel.prefetch(options.prefetchCount || DEFAULT_PREFETCH_COUNT);
 				await this.assertExchange(amqplibChannel, exchangeName, "topic", alternateExchangeName);
-				await this.assertRejectableQueue(amqplibChannel, queueName, options.maxPriority, consumeOptions.persistent);
+				await this.assertRejectableQueue(
+					amqplibChannel,
+					queueName,
+					options.maxPriority,
+					consumeOptions.persistent,
+					consumeOptions.exclusive,
+				);
 				await this.bindQueue(amqplibChannel, queueName, exchangeName, routingKey);
 				const { consumerTag } = await amqplibChannel.consume(queueName, async (amqplibMessage: AmqplibMessage) => {
 					const message = this.decodeMessageBuffer(amqplibMessage.content);
@@ -333,12 +339,14 @@ export default class ChannelProvider {
 		queueName: string,
 		maxPriority: number | undefined,
 		persistent: boolean = true,
+		exclusive: boolean = false,
 	) {
 		return await amqplibChannel.assertQueue(queueName, {
 			deadLetterExchange: '',
 			deadLetterRoutingKey: REJECTED_QUEUE_PREFIX + queueName,
 			maxPriority,
 			autoDelete: !persistent,
+			exclusive,
 		});
 	}
 

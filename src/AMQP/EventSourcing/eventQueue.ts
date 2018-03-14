@@ -82,9 +82,10 @@ export async function bindMore<TPayload extends IEventPayload>(
 	consumerType: string,
 	onEvent: (event: IEvent<TPayload>) => Promise<void>,
 	persistent: boolean = true,
+	exclusive: boolean = false,
 ) {
 	for (let eventType of eventTypes) {
-		await bindOne(amqpConnection, eventType, consumerType, onEvent, persistent);
+		await bindOne(amqpConnection, eventType, consumerType, onEvent, persistent, exclusive);
 	}
 }
 
@@ -94,6 +95,7 @@ export async function bindOne<TPayload extends IEventPayload>(
 	consumerType: string,
 	onEvent: (event: IEvent<TPayload>) => Promise<void>,
 	persistent: boolean = true,
+	exclusive: boolean = false,
 ) {
 	const queueName = getQueueName(consumerType, eventType);
 	return await amqpConnection.queueSubscriber.subscribeRepeatable(
@@ -103,7 +105,10 @@ export async function bindOne<TPayload extends IEventPayload>(
 		EXCHANGE_NAME,
 		FAILED_EXCHANGE_NAME,
 		OPTIONS,
-		{ persistent },
+		{
+			persistent,
+			exclusive,
+		},
 	);
 }
 
@@ -113,6 +118,7 @@ export async function bindOneExpectingConfirmation<TPayload extends IEventPayloa
 	consumerType: string,
 	onEvent: (event: IEvent<TPayload>, ack: () => void, nack: (options?: INackOptions) => void) => Promise<void>,
 	persistent: boolean = true,
+	exclusive: boolean = false,
 ) {
 	const queueName = getQueueName(consumerType, eventType);
 	return await amqpConnection.queueSubscriber.subscribeExpectingConfirmationRepeatable(
@@ -122,7 +128,10 @@ export async function bindOneExpectingConfirmation<TPayload extends IEventPayloa
 		EXCHANGE_NAME,
 		FAILED_EXCHANGE_NAME,
 		OPTIONS,
-		{ persistent },
+		{
+			persistent,
+			exclusive,
+		},
 	);
 }
 
@@ -133,6 +142,7 @@ export async function bindOneForDeviceExpectingConfirmation<TPayload extends IEv
 	deviceUid: string,
 	onEvent: (event: IEvent<TPayload>, ack: () => void, nack: (options?: INackOptions) => void) => Promise<void>,
 	persistent: boolean = true,
+	exclusive: boolean = false,
 ) {
 	const queueName = getDeviceQueueName(consumerType, eventType);
 	return await amqpConnection.queueSubscriber.subscribeExpectingConfirmationRepeatable(
@@ -142,7 +152,10 @@ export async function bindOneForDeviceExpectingConfirmation<TPayload extends IEv
 		EXCHANGE_NAME,
 		FAILED_EXCHANGE_NAME,
 		OPTIONS,
-		{ persistent },
+		{
+			persistent,
+			exclusive,
+		},
 	);
 }
 
@@ -152,6 +165,7 @@ export async function bindOneFailedForDeviceExpectingConfirmation<TPayload exten
 	consumerType: string,
 	onEvent: (event: IEvent<TPayload>, ack: () => void, nack: (options?: INackOptions) => void) => Promise<void>,
 	persistent: boolean = true,
+	exclusive: boolean = false,
 ) {
 	const queueName = getFailedDeviceQueueName(consumerType, eventType);
 	return await amqpConnection.queueSubscriber.subscribeExpectingConfirmationRepeatable(
@@ -161,7 +175,10 @@ export async function bindOneFailedForDeviceExpectingConfirmation<TPayload exten
 		FAILED_EXCHANGE_NAME,
 		undefined,
 		OPTIONS,
-		{ persistent },
+		{
+			persistent,
+			exclusive,
+		},
 	);
 }
 
