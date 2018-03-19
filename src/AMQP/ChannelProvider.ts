@@ -74,7 +74,15 @@ export default class ChannelProvider {
 							async (amqplibResponseMessage: AmqplibMessage) => {
 								if (amqplibResponseMessage.properties.correlationId === correlationId) {
 									amqplibResponseChannel.ack(amqplibResponseMessage);
-									await amqplibResponseChannel.cancel(consumerTag);
+									try {
+										await amqplibResponseChannel.cancel(consumerTag);
+									} catch (error) {
+										console.error(
+											"Error while canceling response queue consumer; consumer tag: " + consumerTag +
+											", exchange: " + exchangeName + ", routing key: " + routingKey,
+											error,
+										);
+									}
 									resolve(this.decodeMessageBuffer(amqplibResponseMessage.content));
 								} else {
 									amqplibResponseChannel.nack(amqplibResponseMessage);
