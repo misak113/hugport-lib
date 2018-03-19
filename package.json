@@ -28,6 +28,7 @@
   "author": "Michael Zabka <zabka.michael@gmail.com>",
   "license": "MIT",
   "dependencies": {
+    "@types/moment-timezone": "^0.5.4",
     "co": "^4.6.0",
     "debug": "^2.6.3",
     "fs-extra": "^4.0.3",
@@ -60,7 +61,6 @@
     "@types/fs-extra": "^4.0.5",
     "@types/lodash": "^4.14.92",
     "@types/mocha": "^2.2.41",
-    "@types/moment-timezone": "^0.5.4",
     "@types/node": "8.5.0",
     "@types/pg-promise": "^0.0.29",
     "@types/redis": "^2.6.0",
