@@ -12,6 +12,7 @@ export default async function fetchNextMessage<TMessage>(
 	queueName: string,
 	routingKey: string,
 	exchangeName: string = '',
+	alternateExchangeName: string = "",
 	options: {
 		priority?: number;
 		maxPriority?: number;
@@ -25,7 +26,14 @@ export default async function fetchNextMessage<TMessage>(
 	try {
 		const channel = await connection.createConfirmChannel();
 		if (exchangeName !== '') {
-			await channel.assertExchange(exchangeName, 'direct' as ExchangeType);
+			if (alternateExchangeName !== "") {
+				await channel.assertExchange(alternateExchangeName, "topic" as ExchangeType);
+				await channel.assertExchange(exchangeName, "topic" as ExchangeType, {
+					alternateExchange: alternateExchangeName,
+				});
+			} else {
+				await channel.assertExchange(exchangeName, "topic" as ExchangeType);
+			}
 		}
 		await assertRejectableQueue(channel, queueName, options.maxPriority);
 		if (exchangeName !== '') {

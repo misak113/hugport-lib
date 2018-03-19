@@ -50,7 +50,7 @@ export async function enqueue<TCommandType extends string>(
 	command: ICommand<TCommandType>,
 	messageOptions: IMessageOptions = { priority: 5 },
 ) {
-	await amqpConnection.queuePublisher.enqueueRepeatable(command, QUEUE_NAME, undefined, OPTIONS, messageOptions);
+	await amqpConnection.queuePublisher.enqueueRepeatable(command, QUEUE_NAME, undefined, undefined, OPTIONS, messageOptions);
 }
 
 export async function process<TType extends string, TCommandError extends ICommandError<string>>(
@@ -61,6 +61,7 @@ export async function process<TType extends string, TCommandError extends IComma
 	return await amqpConnection.queuePublisher.enqueueExpectingResponseRepeatable<ICommand<TType>, IResponse<TType, TCommandError>>(
 		command,
 		QUEUE_NAME,
+		undefined,
 		undefined,
 		OPTIONS,
 		messageOptions,
@@ -85,6 +86,7 @@ export async function bindAll<TCommandType extends string>(
 		},
 		QUEUE_NAME,
 		undefined,
+		undefined,
 		OPTIONS,
 	);
 }
@@ -96,6 +98,7 @@ export async function fetchNext<TCommandType extends string, TPayload extends IC
 		amqpConnection,
 		QUEUE_NAME,
 		QUEUE_NAME,
+		undefined,
 		undefined,
 		{ maxPriority: OPTIONS.maxPriority }
 		);
