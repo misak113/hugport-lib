@@ -123,7 +123,7 @@ describe('AMQP.ChannelProvider', function () {
 				false,
 			);
 
-			const rawTestChannel = await this.amqplibConnection.createChannel();
+			const rawTestChannel: Channel = await this.amqplibConnection.createChannel();
 			await rawTestChannel.deleteExchange('exchange1');
 			await rawTestChannel.deleteExchange('exchange2');
 			await rawTestChannel.deleteQueue('queue1');
@@ -147,10 +147,14 @@ describe('AMQP.ChannelProvider', function () {
 			'should consume message from a queue bound to a specific exchange and routing key ' +
 			'and send response message to a queue specified in the consumed message as "replyTo" parameter',
 			async function () {
-				const rawTestChannel = await this.amqplibConnection.createChannel();
+				const rawTestChannel: Channel = await this.amqplibConnection.createChannel();
 				await rawTestChannel.deleteExchange('exchange1');
 				await rawTestChannel.deleteExchange('exchange2');
 				await rawTestChannel.deleteQueue('queue1');
+				await rawTestChannel.deleteQueue('replyQueue1');
+				await rawTestChannel.deleteQueue('replyQueue2');
+				await rawTestChannel.deleteQueue('replyQueue3');
+				await rawTestChannel.deleteQueue('replyQueue4');
 				await rawTestChannel.assertQueue('replyQueue1', { durable: false, autoDelete: true });
 				await rawTestChannel.assertQueue('replyQueue2', { durable: false, autoDelete: true });
 				await rawTestChannel.assertQueue('replyQueue3', { durable: false, autoDelete: true });
@@ -210,8 +214,8 @@ describe('AMQP.ChannelProvider', function () {
 				await waitUntil(async () => message1 = await rawTestChannel.get('replyQueue1', { noAck: true }), 100);
 				await waitUntil(async () => message2 = await rawTestChannel.get('replyQueue2', { noAck: true }), 100);
 
-				JSON.parse(message1!.content.toString()).should.deepEqual({ response: { message: 1 } });
-				JSON.parse(message2!.content.toString()).should.deepEqual({ response: { message: 2 } });
+				message1!.content.toString().should.deepEqual(JSON.stringify({ response: { message: 1 } }));
+				message2!.content.toString().should.deepEqual(JSON.stringify({ response: { message: 2 } }));
 			},
 		);
 	});
