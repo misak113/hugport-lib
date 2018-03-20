@@ -182,18 +182,33 @@ export async function bindOneFailedForDeviceExpectingConfirmation<TPayload exten
 	);
 }
 
-export async function purgeMore(
+export async function purgeOne(
+	amqpConnection: IAMQPConnection,
+	eventType: string,
+	consumerType: string,
+) {
+	const queueName = getQueueName(consumerType, eventType);
+	const channel = await amqpConnection.channelProvider.getChannel(getBasicEventRoutingKey(eventType));
+	await channel.purge(queueName);
+}
+
+export async function deleteMore(
 	amqpConnection: IAMQPConnection,
 	eventTypes: string[],
 	consumerType: string,
 ) {
 	for (let eventType of eventTypes) {
-		/* tslint:disable-next-line */
-		while (await fetchNext(amqpConnection, eventType, consumerType)) ;
-		/* tslint:disable-next-line */
-		while (await fetchNextForDevice(amqpConnection, eventType, consumerType, "*")) ;
-		/* tslint:disable-next-line */
-		while (await fetchNextFailedForDevice(amqpConnection, eventType, consumerType)) ;
+		const queueName = getQueueName(consumerType, eventType);
+		const channel = await amqpConnection.channelProvider.getChannel(getBasicEventRoutingKey(eventType));
+		await channel.delete(queueName);
+
+		const deviceQueueName = getDeviceQueueName(consumerType, eventType);
+		const deviceChannel = await amqpConnection.channelProvider.getChannel(getDeviceEventRoutingKey(eventType, '*'));
+		await deviceChannel.delete(deviceQueueName);
+
+		const failedDeviceQueueName = getFailedDeviceQueueName(consumerType, eventType);
+		const failedDeviceChannel = await amqpConnection.channelProvider.getChannel(getDeviceEventRoutingKey(eventType, '*'));
+		await failedDeviceChannel.delete(failedDeviceQueueName);
 	}
 }
 
