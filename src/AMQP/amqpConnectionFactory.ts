@@ -79,7 +79,7 @@ export function createAmqpConnection(dsn: string): IAMQPConnection {
 		},
 		close: async function () {
 			debug('close');
-			await pool.drain();
+			await pool.drain(() => pool.destroyAllNow());
 			pool.clear();
 		},
 	};
