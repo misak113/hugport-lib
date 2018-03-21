@@ -6,6 +6,7 @@ import {
 	bindAll,
 	fetchNext,
 	purgeAll,
+	deleteAll,
 } from '../../../../src/AMQP/CQRS/commandQueue';
 import waitUntil from '../../../../src/DateTime/waitUntil';
 import wait from '../../../../src/Timer/wait';
@@ -198,8 +199,50 @@ describe('AMQP.CQRS.commandQueue', function () {
 			channel.sendToQueue('commands', new Buffer(JSON.stringify(createCommand({ a: 5 }))));
 
 			await wait(500);
-			const purgedCount = await purgeAll(amqpConnection);
-			purgedCount.should.equal(5);
+			await purgeAll(amqpConnection);
+			const command = await fetchNext(amqpConnection);
+			should(command).be.null();
+
+			const nextCommand = await channel.get('commands');
+			if (nextCommand) {
+				console.log(JSON.parse(nextCommand.content.toString()));
+			}
+			should(nextCommand).be.false();
+		});
+	});
+
+	describe('deleteAll', function () {
+
+		it('should delete all commands queues', async function () {
+			const channel = await this.amqplibConnection.createChannel();
+			await channel.deleteQueue('commands');
+			await channel.assertQueue('commands', {
+				deadLetterExchange: '',
+				deadLetterRoutingKey: '__rejected.commands',
+				maxPriority: 10,
+			});
+
+			const createCommand = (payload: object) => ({
+				id: null,
+				type: 'test',
+				sourceUid: 'test',
+				receivedAt: new Date(),
+				payload: {
+					type: 'test',
+					...payload,
+				},
+			});
+
+			channel.sendToQueue('commands', new Buffer(JSON.stringify(createCommand({ a: 1 }))));
+			channel.sendToQueue('commands', new Buffer(JSON.stringify(createCommand({ a: 2 }))));
+			channel.sendToQueue('commands', new Buffer(JSON.stringify(createCommand({ a: 3 }))));
+			channel.sendToQueue('commands', new Buffer(JSON.stringify(createCommand({ a: 4 }))));
+			channel.sendToQueue('commands', new Buffer(JSON.stringify(createCommand({ a: 5 }))));
+
+			await wait(500);
+			await deleteAll(amqpConnection);
+			const command = await fetchNext(amqpConnection);
+			should(command).be.null();
 
 			const nextCommand = await channel.get('commands');
 			if (nextCommand) {

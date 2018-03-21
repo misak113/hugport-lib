@@ -1,3 +1,4 @@
+import { Channel } from 'amqplib';
 import * as should from 'should';
 import * as sinon from 'sinon';
 import { amqpConnection } from '../../connections';
@@ -9,10 +10,12 @@ import {
 	bindOneExpectingConfirmation,
 	bindOneForDeviceExpectingConfirmation,
 	bindOneFailedForDeviceExpectingConfirmation,
-	purgeMore,
+	purgeOne,
+	deleteMore,
 } from '../../../../src/AMQP/EventSourcing/eventQueue';
 import waitUntil from '../../../../src/DateTime/waitUntil';
 import wait from '../../../../src/Timer/wait';
+import { generateUniqueHash } from '../../../../src/Hash/generator';
 
 describe('AMQP.EventSourcing.eventQueue', function () {
 
@@ -504,10 +507,36 @@ describe('AMQP.EventSourcing.eventQueue', function () {
 		});
 	});
 
-	describe('purgeMore', function () {
+	describe('purgeOne', function () {
 
-		it('should purge all events of given types from given destination for a given consumer type', async function () {
-			const channel = await this.amqplibConnection.createChannel();
+		it('should purge all events of given type from given destination for a given consumer type', async function () {
+			const channel: Channel = await this.amqplibConnection.createChannel();
+			await channel.deleteExchange('events');
+			await channel.deleteExchange('events_failed');
+			await channel.deleteQueue('consumer1_event1');
+			await channel.assertExchange('events_failed', "topic");
+			await channel.assertExchange('events', "topic", { alternateExchange: "events_failed" });
+			await channel.assertQueue('consumer1_event1', {
+				deadLetterExchange: '',
+				deadLetterRoutingKey: '__rejected.consumer1_event1',
+			});
+			await channel.bindQueue('consumer1_event1', 'events', 'event.event1');
+
+			channel.publish('events', 'event1', new Buffer(JSON.stringify(createEvent('event1', 1))));
+			await purgeOne(amqpConnection, 'event1', 'consumer1');
+			await channel.assertQueue('consumer1_event1', {
+				deadLetterExchange: '',
+				deadLetterRoutingKey: '__rejected.consumer1_event1',
+			});
+			const message1 = await channel.get('consumer1_event1');
+			should(message1).false();
+		});
+	});
+
+	describe('deleteMore', function () {
+
+		it('should delete all events queues of given types from given destination for a given consumer type', async function () {
+			const channel: Channel = await this.amqplibConnection.createChannel();
 			await channel.deleteExchange('events');
 			await channel.deleteExchange('events_failed');
 			await channel.deleteQueue('consumer1_event1');
@@ -526,12 +555,32 @@ describe('AMQP.EventSourcing.eventQueue', function () {
 			await channel.bindQueue('consumer2_event1', 'events', 'event.event1');
 
 			channel.publish('events', 'event1', new Buffer(JSON.stringify(createEvent('event1', 1))));
-			await purgeMore(amqpConnection, ['event1'], 'consumer1');
-			(await channel.get('consumer1_event1')).should.be.false();
+			await deleteMore(amqpConnection, ['event1'], 'consumer1');
+			await channel.assertQueue('consumer1_event1', {
+				deadLetterExchange: '',
+				deadLetterRoutingKey: '__rejected.consumer1_event1',
+			});
+			const message1 = await channel.get('consumer1_event1');
+			should(message1).false();
 
 			channel.publish('events', 'event1', new Buffer(JSON.stringify(createEvent('event1', 2))));
-			await purgeMore(amqpConnection, ['event1'], 'consumer2');
-			(await channel.get('consumer2_event1')).should.be.false();
+			await deleteMore(amqpConnection, ['event1'], 'consumer2');
+			await channel.assertQueue('consumer2_event1', {
+				deadLetterExchange: '',
+				deadLetterRoutingKey: '__rejected.consumer2_event1',
+			});
+			const message2 = await channel.get('consumer2_event1');
+			should(message2).false();
+
+			const randomValue = generateUniqueHash();
+			await deleteMore(amqpConnection, ['event1'], `consumerNotExisting${randomValue}`);
+			await deleteMore(amqpConnection, ['event1'], `consumerNotExisting${randomValue}`);
+			await channel.assertQueue(`consumerNotExisting${randomValue}_event1`, {
+				deadLetterExchange: '',
+				deadLetterRoutingKey: `__rejected.consumerNotExisting${randomValue}_event1`,
+			});
+			const message3 = await channel.get(`consumerNotExisting${randomValue}_event1`);
+			should(message3).false();
 		});
 	});
 });

@@ -192,6 +192,22 @@ export default class ChannelProvider {
 					await amqplibChannel.cancel(consumerTag);
 				};
 			},
+			purge: async (queueName: string) => {
+				const amqplibChannel = await amqplibConnection.createChannel();
+				try {
+					await amqplibChannel.purgeQueue(queueName);
+				} finally {
+					await amqplibChannel.close();
+				}
+			},
+			delete: async (queueName: string) => {
+				const amqplibChannel = await amqplibConnection.createChannel();
+				try {
+					await amqplibChannel.deleteQueue(queueName);
+				} finally {
+					await amqplibChannel.close();
+				}
+			},
 		};
 		return channel;
 	}

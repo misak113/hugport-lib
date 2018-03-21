@@ -13,6 +13,7 @@ const debug = Debug('@signageos/lib:AMQP:amqpConnectionFactory');
 
 export interface IAMQPConnection {
 	pool: IAMQPPool;
+	channelProvider: ChannelProvider;
 	queuePublisher: QueuePublisher;
 	queueSubscriber: QueueSubscriber;
 	connect: () => Promise<void>;
@@ -70,6 +71,7 @@ export function createAmqpConnection(dsn: string): IAMQPConnection {
 	const channelProvider = new ChannelProvider(pool);
 	return {
 		pool,
+		channelProvider,
 		queuePublisher: new QueuePublisher(channelProvider, unqueuedMessageStorage),
 		queueSubscriber: new QueueSubscriber(channelProvider, unsubscribedMessageStorage),
 		connect: async function () {
@@ -79,7 +81,7 @@ export function createAmqpConnection(dsn: string): IAMQPConnection {
 		},
 		close: async function () {
 			debug('close');
-			await pool.drain();
+			await pool.drain(() => pool.destroyAllNow());
 			pool.clear();
 		},
 	};
