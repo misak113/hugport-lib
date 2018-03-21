@@ -113,3 +113,7 @@ export async function deleteAll(amqpConnection: IAMQPConnection) {
 	const channel = await amqpConnection.channelProvider.getChannel(QUEUE_NAME);
 	await channel.delete(QUEUE_NAME);
 }
+
+export async function prepareAll(amqpConnection: IAMQPConnection) {
+	await fetchNext(amqpConnection);
+}
