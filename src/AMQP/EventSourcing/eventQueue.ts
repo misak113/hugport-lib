@@ -212,6 +212,13 @@ export async function deleteMore(
 	}
 }
 
+export async function prepareMore(amqpConnection: IAMQPConnection, events: string[], consumerType: string) {
+	for (const event of events) {
+		// Hack to create event queue for exchange
+		await fetchNext(amqpConnection, event, consumerType);
+	}
+}
+
 function getQueueName(consumerType: string, eventType: string) {
 	return consumerType + '_' + eventType;
 }
