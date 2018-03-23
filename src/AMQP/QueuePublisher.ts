@@ -20,19 +20,21 @@ export default class QueuePublisher {
 
 	public async enqueue<TMessage>(
 		message: TMessage,
+		namespace: string,
 		routingKey: string,
 		exchangeName?: string,
 		alternateExchangeName?: string,
 		options?: IQueueOptions,
 		messageOptions: IMessageOptions = {},
 	) {
-		const channel = await this.channelProvider.getChannel(routingKey, exchangeName, options, alternateExchangeName);
+		const channel = await this.channelProvider.getChannel(namespace, routingKey, exchangeName, options, alternateExchangeName);
 		await channel.send(message, messageOptions);
 		debug('Message enqueued: %s', exchangeName, alternateExchangeName, routingKey, message);
 	}
 
 	public async enqueueRepeatable<TMessage>(
 		message: TMessage,
+		namespace: string,
 		routingKey: string,
 		exchangeName?: string,
 		alternateExchangeName?: string,
@@ -40,12 +42,12 @@ export default class QueuePublisher {
 		messageOptions: IMessageOptions = {},
 	) {
 		try {
-			await this.enqueue(message, routingKey, exchangeName, alternateExchangeName, options, messageOptions);
+			await this.enqueue(message, namespace, routingKey, exchangeName, alternateExchangeName, options, messageOptions);
 		} catch (error) {
 			debug('Error during enqueue repeatable: %s', routingKey, exchangeName, alternateExchangeName, message, error);
 			await new Promise((resolve: () => void) => {
 				this.unqueuedMessageStorage.push({
-					message, routingKey, exchangeName, alternateExchangeName, options, messageOptions, resolve, responseWaiting: false,
+					message, namespace, routingKey, exchangeName, alternateExchangeName, options, messageOptions, resolve, responseWaiting: false,
 				});
 				this.tryReenqueueAfterTimeout();
 			});
@@ -54,13 +56,14 @@ export default class QueuePublisher {
 
 	public async enqueueExpectingResponse<TMessage, TResponseMessage>(
 		message: TMessage,
+		namespace: string,
 		routingKey: string,
 		exchangeName?: string,
 		alternateExchangeName?: string,
 		options?: IQueueOptions,
 		messageOptions: IMessageOptions = {},
 	): Promise<TResponseMessage> {
-		const channel = await this.channelProvider.getChannel(routingKey, exchangeName, options, alternateExchangeName);
+		const channel = await this.channelProvider.getChannel(namespace, routingKey, exchangeName, options, alternateExchangeName);
 		const response = await channel.sendExpectingResponse<TResponseMessage>(message, messageOptions);
 		debug('Message enqueued: %s', routingKey, exchangeName, alternateExchangeName, message);
 		return response;
@@ -68,6 +71,7 @@ export default class QueuePublisher {
 
 	public async enqueueExpectingResponseRepeatable<TMessage, TResponseMessage>(
 		message: TMessage,
+		namespace: string,
 		routingKey: string,
 		exchangeName?: string,
 		alternateExchangeName?: string,
@@ -76,13 +80,14 @@ export default class QueuePublisher {
 	): Promise<TResponseMessage> {
 		try {
 			return await this.enqueueExpectingResponse<TMessage, TResponseMessage>(
-				message, routingKey, exchangeName, alternateExchangeName, options, messageOptions
+				message, namespace, routingKey, exchangeName, alternateExchangeName, options, messageOptions
 			);
 		} catch (error) {
 			debug('Error during enqueue repeatable: %s', exchangeName, alternateExchangeName, routingKey, message, error);
 			return await new Promise((resolve: (response: TResponseMessage) => void) => {
 				this.unqueuedMessageStorage.push({
 					message,
+					namespace,
 					routingKey,
 					exchangeName,
 					options,
@@ -99,15 +104,17 @@ export default class QueuePublisher {
 		while (true) {
 			const unqueuedMessage = this.unqueuedMessageStorage.shift();
 			if (unqueuedMessage) {
-				const { message, routingKey, exchangeName, alternateExchangeName, options, messageOptions, resolve, responseWaiting } = unqueuedMessage;
+				const {
+					message, namespace, routingKey, exchangeName, alternateExchangeName, options, messageOptions, resolve, responseWaiting,
+				} = unqueuedMessage;
 				try {
 					if (responseWaiting) {
 						const response = await this.enqueueExpectingResponse(
-							message, routingKey, exchangeName, alternateExchangeName, options, messageOptions,
+							message, namespace, routingKey, exchangeName, alternateExchangeName, options, messageOptions,
 						);
 						resolve(response);
 					} else {
-						await this.enqueue(message, routingKey, exchangeName, alternateExchangeName, options, messageOptions);
+						await this.enqueue(message, namespace, routingKey, exchangeName, alternateExchangeName, options, messageOptions);
 						resolve();
 					}
 				} catch (error) {

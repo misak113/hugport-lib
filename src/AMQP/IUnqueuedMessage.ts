@@ -5,6 +5,7 @@ import IMessageOptions from './IMessageOptions';
 export default IUnqueuedMessage;
 interface IUnqueuedMessage {
 	message: any;
+	namespace: string;
 	routingKey: string;
 	exchangeName?: string;
 	alternateExchangeName?: string;

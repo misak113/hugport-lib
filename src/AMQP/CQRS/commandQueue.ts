@@ -50,7 +50,7 @@ export async function enqueue<TCommandType extends string>(
 	command: ICommand<TCommandType>,
 	messageOptions: IMessageOptions = { priority: 5 },
 ) {
-	await amqpConnection.queuePublisher.enqueueRepeatable(command, QUEUE_NAME, undefined, undefined, OPTIONS, messageOptions);
+	await amqpConnection.queuePublisher.enqueueRepeatable(command, QUEUE_NAME, QUEUE_NAME, undefined, undefined, OPTIONS, messageOptions);
 }
 
 export async function process<TType extends string, TCommandError extends ICommandError<string>>(
@@ -60,6 +60,7 @@ export async function process<TType extends string, TCommandError extends IComma
 ) {
 	return await amqpConnection.queuePublisher.enqueueExpectingResponseRepeatable<ICommand<TType>, IResponse<TType, TCommandError>>(
 		command,
+		QUEUE_NAME,
 		QUEUE_NAME,
 		undefined,
 		undefined,
@@ -85,6 +86,7 @@ export async function bindAll<TCommandType extends string>(
 			}
 		},
 		QUEUE_NAME,
+		QUEUE_NAME,
 		undefined,
 		undefined,
 		OPTIONS,
@@ -105,12 +107,12 @@ export async function fetchNext<TCommandType extends string, TPayload extends IC
 }
 
 export async function purgeAll(amqpConnection: IAMQPConnection) {
-	const channel = await amqpConnection.channelProvider.getChannel(QUEUE_NAME);
+	const channel = await amqpConnection.channelProvider.getChannel(QUEUE_NAME, QUEUE_NAME);
 	await channel.purge(QUEUE_NAME);
 }
 
 export async function deleteAll(amqpConnection: IAMQPConnection) {
-	const channel = await amqpConnection.channelProvider.getChannel(QUEUE_NAME);
+	const channel = await amqpConnection.channelProvider.getChannel(QUEUE_NAME, QUEUE_NAME);
 	await channel.delete(QUEUE_NAME);
 }
 

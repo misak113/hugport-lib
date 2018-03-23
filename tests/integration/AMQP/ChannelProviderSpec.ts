@@ -46,7 +46,7 @@ describe('AMQP.ChannelProvider', function () {
 			await rawTestChannel.bindQueue('queue3', 'exchange1', 'route2');
 			await rawTestChannel.bindQueue('queue4', 'exchange2', 'route1');
 
-			const channelInstance = await this.channelProvider.getChannel('route1', 'exchange1');
+			const channelInstance = await this.channelProvider.getChannel('test', 'route1', 'exchange1');
 			await channelInstance.send({ a: 1, b: 2 });
 			await wait(500);
 
@@ -102,7 +102,7 @@ describe('AMQP.ChannelProvider', function () {
 			await rawTestChannel.consume('queue3', createConsumeAndRespondCallback(rawTestChannel, { response: 3 }));
 			await rawTestChannel.consume('queue4', createConsumeAndRespondCallback(rawTestChannel, { response: 4 }));
 
-			const channelInstance = await this.channelProvider.getChannel('route1', 'exchange1');
+			const channelInstance = await this.channelProvider.getChannel('test', 'route1', 'exchange1');
 			const response = await channelInstance.sendExpectingResponse({ c: 3, d: 4 });
 			response.should.deepEqual({ response: 1 });
 		});
@@ -111,7 +111,7 @@ describe('AMQP.ChannelProvider', function () {
 	describe('consume', function () {
 
 		it('should consume message from a queue bound to a specific exchange and routing key', async function () {
-			const channelInstance = await this.channelProvider.getChannel('route1', 'exchange1');
+			const channelInstance = await this.channelProvider.getChannel('test', 'route1', 'exchange1');
 			const consumeCallback = async (queueName: string, result: object, done: () => void) => await channelInstance.consume(
 				queueName,
 				async (message: any, ack: () => void) => {
@@ -160,7 +160,7 @@ describe('AMQP.ChannelProvider', function () {
 				await rawTestChannel.assertQueue('replyQueue3', { durable: false, autoDelete: true });
 				await rawTestChannel.assertQueue('replyQueue4', { durable: false, autoDelete: true });
 
-				const channelInstance = await this.channelProvider.getChannel('route1', 'exchange1');
+				const channelInstance = await this.channelProvider.getChannel('test', 'route1', 'exchange1');
 				await channelInstance.consume(
 					'queue1',
 					async (message: any, ack: () => void) => {

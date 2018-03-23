@@ -36,18 +36,27 @@ export default class ChannelProvider {
 	}
 
 	public async getChannel(
+		namespace: string,
 		routingKey: string,
 		exchangeName: string = '',
 		options: IQueueOptions = {},
 		alternateExchangeName?: string,
 	): Promise<IChannel<any>> {
 		const amqplibConnection = await this.getAmqplibConnection();
+		let amqplibChannel: AmqplibChannel;
+
+		if (options.confirmable) {
+			amqplibChannel = await this.getAmqplibConfirmChannel(amqplibConnection, namespace);
+		} else {
+			amqplibChannel = await this.getAmqplibChannel(amqplibConnection, namespace);
+		}
+
 		const channel = {
 			send: async (message: any, messageOptions: IMessageOptions = {}) => {
 				const encodedMessageBuffer = this.encodeMessageIntoBuffer(message);
 				const amqplibSendOptions = this.createAmqplibSendOptions(options, messageOptions);
 				await this.publish(
-					amqplibConnection, exchangeName, routingKey, encodedMessageBuffer, amqplibSendOptions, options, alternateExchangeName,
+					amqplibChannel, exchangeName, routingKey, encodedMessageBuffer, amqplibSendOptions, options, alternateExchangeName,
 				);
 			},
 			sendExpectingResponse: async <TResponseMessage>(message: any, messageOptions: IMessageOptions = {}) => {
@@ -64,7 +73,7 @@ export default class ChannelProvider {
 					replyTo: responseQueueName,
 				};
 				const sentPromise = this.publish(
-					amqplibConnection, exchangeName, routingKey, encodedMessageBuffer, amqplibSendOptions, options, alternateExchangeName,
+					amqplibChannel, exchangeName, routingKey, encodedMessageBuffer, amqplibSendOptions, options, alternateExchangeName,
 				);
 				const responsePromise = new Promise(
 					async (resolve: (responseMessage: TResponseMessage) => void) => {
@@ -138,10 +147,6 @@ export default class ChannelProvider {
 					throw new Error('If default exchange is used, queue name must match the routing key');
 				}
 
-				const channelIdentifier = this.getExchangeChannelIdentifier(exchangeName, routingKey);
-				const amqplibChannel = options.confirmable
-					? await this.getAmqplibConfirmChannel(amqplibConnection, channelIdentifier)
-					: await this.getAmqplibChannel(amqplibConnection, channelIdentifier);
 				amqplibChannel.once('error', (error:  Error) => {
 					if (onEnded) {
 						onEnded();
@@ -193,7 +198,6 @@ export default class ChannelProvider {
 				};
 			},
 			purge: async (queueName: string) => {
-				const amqplibChannel = await amqplibConnection.createChannel();
 				try {
 					await amqplibChannel.purgeQueue(queueName);
 				} finally {
@@ -201,7 +205,6 @@ export default class ChannelProvider {
 				}
 			},
 			delete: async (queueName: string) => {
-				const amqplibChannel = await amqplibConnection.createChannel();
 				try {
 					await amqplibChannel.deleteQueue(queueName);
 				} finally {
@@ -269,7 +272,7 @@ export default class ChannelProvider {
 	}
 
 	private async publish(
-		amqplibConnection: AmqplibConnection,
+		amqplibChannel: AmqplibChannel | AmqplibConfirmChannel,
 		exchangeName: string,
 		routingKey: string,
 		encodedMessageBuffer: Buffer,
@@ -277,12 +280,9 @@ export default class ChannelProvider {
 		options: IQueueOptions,
 		alternateExchangeName?: string,
 	) {
-		const channelIdentificator = this.getExchangeChannelIdentifier(exchangeName, routingKey);
-
 		if (options.confirmable) {
-			const amqplibChannel = await this.getAmqplibConfirmChannel(amqplibConnection, channelIdentificator);
 			await this.assertExchange(amqplibChannel, exchangeName, "topic", alternateExchangeName);
-			await new Promise((resolve: () => void, reject: (error: Error) => void) => amqplibChannel.publish(
+			await new Promise((resolve: () => void, reject: (error: Error) => void) => (<AmqplibConfirmChannel> amqplibChannel).publish(
 				exchangeName,
 				routingKey,
 				encodedMessageBuffer,
@@ -290,7 +290,6 @@ export default class ChannelProvider {
 				(error: Error) => error !== null ? reject(error) : resolve(),
 			));
 		} else {
-			const amqplibChannel = await this.getAmqplibChannel(amqplibConnection, channelIdentificator);
 			await this.assertExchange(amqplibChannel, exchangeName, "topic", alternateExchangeName);
 			amqplibChannel.publish(
 				exchangeName,

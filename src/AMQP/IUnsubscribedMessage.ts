@@ -8,6 +8,7 @@ export default IUnsubscribedMessage;
 interface IUnsubscribedMessage {
 	queueName: string;
 	onMessage: (message: any, ack?: () => void, nack?: (options?: INackOptions) => void) => Promise<any>;
+	namespace: string;
 	routingKey: string;
 	exchangeName?: string;
 	alternateExchangeName?: string;
