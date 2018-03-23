@@ -511,8 +511,6 @@ describe('AMQP.EventSourcing.eventQueue', function () {
 
 		it('should purge all events of given type from given destination for a given consumer type', async function () {
 			const channel: Channel = await this.amqplibConnection.createChannel();
-			await channel.deleteExchange('events');
-			await channel.deleteExchange('events_failed');
 			await channel.deleteQueue('consumer1_event1');
 			await channel.assertExchange('events_failed', "topic");
 			await channel.assertExchange('events', "topic", { alternateExchange: "events_failed" });
@@ -537,8 +535,6 @@ describe('AMQP.EventSourcing.eventQueue', function () {
 
 		it('should delete all events queues of given types from given destination for a given consumer type', async function () {
 			const channel: Channel = await this.amqplibConnection.createChannel();
-			await channel.deleteExchange('events');
-			await channel.deleteExchange('events_failed');
 			await channel.deleteQueue('consumer1_event1');
 			await channel.deleteQueue('consumer2_event1');
 			await channel.assertExchange('events_failed', "topic");
