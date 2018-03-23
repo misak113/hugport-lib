@@ -27,4 +27,5 @@ interface IChannel<TMessage> {
 	): Promise<ICancelConsumption>;
 	purge(queueName: string): Promise<void>;
 	delete(queueName: string): Promise<void>;
+	close(): Promise<void>;
 }

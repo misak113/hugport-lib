@@ -28,8 +28,14 @@ export default class QueuePublisher {
 		messageOptions: IMessageOptions = {},
 	) {
 		const channel = await this.channelProvider.getChannel(namespace, routingKey, exchangeName, options, alternateExchangeName);
-		await channel.send(message, messageOptions);
-		debug('Message enqueued: %s', exchangeName, alternateExchangeName, routingKey, message);
+		try {
+			await channel.send(message, messageOptions);
+			debug('Message enqueued: %s', exchangeName, alternateExchangeName, routingKey, message);
+		} finally {
+			// it's ineffective to open/close channel all the time if sending messages often
+			// TODO : do something about this
+			// await channel.close();
+		}
 	}
 
 	public async enqueueRepeatable<TMessage>(
@@ -64,9 +70,15 @@ export default class QueuePublisher {
 		messageOptions: IMessageOptions = {},
 	): Promise<TResponseMessage> {
 		const channel = await this.channelProvider.getChannel(namespace, routingKey, exchangeName, options, alternateExchangeName);
-		const response = await channel.sendExpectingResponse<TResponseMessage>(message, messageOptions);
-		debug('Message enqueued: %s', routingKey, exchangeName, alternateExchangeName, message);
-		return response;
+		try {
+			const response = await channel.sendExpectingResponse<TResponseMessage>(message, messageOptions);
+			debug('Message enqueued: %s', routingKey, exchangeName, alternateExchangeName, message);
+			return response;
+		} finally {
+			// it's ineffective to open/close channel all the time if sending messages often
+			// TODO : do something about this
+			// await channel.close();
+		}
 	}
 
 	public async enqueueExpectingResponseRepeatable<TMessage, TResponseMessage>(

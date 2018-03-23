@@ -34,7 +34,13 @@ export default class QueuePublisher {
 		const channel = await this.channelProvider.getChannel(namespace, routingKey, exchangeName, options, alternateExchangeName);
 		const cancelConsumption = await channel.consumeSimple(queueName, onMessage, consumeOptions, onEnded);
 		debug('Messages subscribed: %s', queueName, routingKey, exchangeName);
-		return cancelConsumption;
+		return async () => {
+			try {
+				await cancelConsumption();
+			} finally {
+				await channel.close();
+			}
+		};
 	}
 
 	public async subscribeRepeatable<TMessage>(
@@ -88,7 +94,13 @@ export default class QueuePublisher {
 		const channel = await this.channelProvider.getChannel(namespace, routingKey, exchangeName, options, alternateExchangeName);
 		const cancelConsumption = await channel.consume(queueName, onMessage, true, consumeOptions, onEnded);
 		debug('Messages subscribed expecting confirmation: %s', queueName, routingKey, exchangeName);
-		return cancelConsumption;
+		return async () => {
+			try {
+				await cancelConsumption();
+			} finally {
+				await channel.close();
+			}
+		};
 	}
 
 	public async subscribeExpectingConfirmationRepeatable<TMessage, TResponseMessage>(

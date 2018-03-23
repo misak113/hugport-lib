@@ -61,6 +61,8 @@ describe('AMQP.ChannelProvider', function () {
 			should(message3).be.false();
 			should(message4).be.false();
 			should(message5).be.false();
+
+			await channelInstance.close();
 		});
 	});
 
@@ -105,6 +107,7 @@ describe('AMQP.ChannelProvider', function () {
 			const channelInstance = await this.channelProvider.getChannel('test', 'route1', 'exchange1');
 			const response = await channelInstance.sendExpectingResponse({ c: 3, d: 4 });
 			response.should.deepEqual({ response: 1 });
+			await channelInstance.close();
 		});
 	});
 
@@ -141,6 +144,7 @@ describe('AMQP.ChannelProvider', function () {
 			rawTestChannel.publish('exchange1', 'route1', new Buffer(JSON.stringify({ message: 1 })));
 
 			await waitUntil(async () => done1 && done2, 100);
+			await channelInstance.close();
 		});
 
 		it(
@@ -216,6 +220,8 @@ describe('AMQP.ChannelProvider', function () {
 
 				message1!.content.toString().should.deepEqual(JSON.stringify({ response: { message: 1 } }));
 				message2!.content.toString().should.deepEqual(JSON.stringify({ response: { message: 2 } }));
+
+				await channelInstance.close();
 			},
 		);
 	});

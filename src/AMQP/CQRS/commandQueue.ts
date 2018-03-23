@@ -108,12 +108,20 @@ export async function fetchNext<TCommandType extends string, TPayload extends IC
 
 export async function purgeAll(amqpConnection: IAMQPConnection) {
 	const channel = await amqpConnection.channelProvider.getChannel(QUEUE_NAME, QUEUE_NAME);
-	await channel.purge(QUEUE_NAME);
+	try {
+		await channel.purge(QUEUE_NAME);
+	} finally {
+		await channel.close();
+	}
 }
 
 export async function deleteAll(amqpConnection: IAMQPConnection) {
 	const channel = await amqpConnection.channelProvider.getChannel(QUEUE_NAME, QUEUE_NAME);
-	await channel.delete(QUEUE_NAME);
+	try {
+		await channel.delete(QUEUE_NAME);
+	} finally {
+		await channel.close();
+	}
 }
 
 export async function prepareAll(amqpConnection: IAMQPConnection) {

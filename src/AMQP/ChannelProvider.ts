@@ -27,7 +27,12 @@ export const RESPONSE_QUEUE_PREFIX = '__response.';
 export default class ChannelProvider {
 
 	private amqplibConnection: AmqplibConnection | undefined;
-	private amqplibChannnelMap: { [queueIdentifier: string]: AmqplibChannel };
+	private amqplibChannnelMap: {
+		[queueIdentifier: string]: {
+			channel: AmqplibChannel;
+			clientCount: number;
+		}
+	};
 
 	constructor(
 		private amqpPool: IAMQPPool,
@@ -198,17 +203,16 @@ export default class ChannelProvider {
 				};
 			},
 			purge: async (queueName: string) => {
-				try {
-					await amqplibChannel.purgeQueue(queueName);
-				} finally {
-					await amqplibChannel.close();
-				}
+				await amqplibChannel.purgeQueue(queueName);
 			},
 			delete: async (queueName: string) => {
-				try {
-					await amqplibChannel.deleteQueue(queueName);
-				} finally {
-					await amqplibChannel.close();
+				await amqplibChannel.deleteQueue(queueName);
+			},
+			close: async () => {
+				if (options.confirmable) {
+					await this.closeAmqplibConfirmChannel(namespace);
+				} else {
+					await this.closeAmqplibChannel(namespace);
 				}
 			},
 		};
@@ -318,12 +322,21 @@ export default class ChannelProvider {
 		});
 	}
 
+	private async closeAmqplibChannel(identifier: string) {
+		await this.releaseAmqplibChannel("not_confirm-" + identifier);
+	}
+
+	private async closeAmqplibConfirmChannel(identifier: string) {
+		await this.releaseAmqplibChannel("confirm-" + identifier);
+	}
+
 	private async getOrCreateAmqplibChannel<TAmqplibChannel extends AmqplibChannel>(
 		identifier: string,
 		createChannel: () => Promise<TAmqplibChannel>,
 	): Promise<TAmqplibChannel> {
 		if (typeof this.amqplibChannnelMap[identifier] !== 'undefined') {
-			return this.amqplibChannnelMap[identifier] as TAmqplibChannel;
+			this.amqplibChannnelMap[identifier].clientCount++;
+			return this.amqplibChannnelMap[identifier].channel as TAmqplibChannel;
 		} else {
 			debug('Create channel %s', identifier);
 			const amqplibChannel = await createChannel();
@@ -331,12 +344,30 @@ export default class ChannelProvider {
 				// if more channels are created in same time then use the first created
 				debug('Close useless channel %s', identifier);
 				amqplibChannel.close();
-				return this.amqplibChannnelMap[identifier] as TAmqplibChannel;
+				this.amqplibChannnelMap[identifier].clientCount++;
+				return this.amqplibChannnelMap[identifier].channel as TAmqplibChannel;
 			} else {
 				debug('Created channel %s', identifier);
-				this.amqplibChannnelMap[identifier] = amqplibChannel;
+				this.amqplibChannnelMap[identifier] = {
+					channel: amqplibChannel,
+					clientCount: 1,
+				};
 				return amqplibChannel;
 			}
+		}
+	}
+
+	private async releaseAmqplibChannel(identifier: string) {
+		if (typeof this.amqplibChannnelMap[identifier] !== "undefined") {
+			if (this.amqplibChannnelMap[identifier].clientCount <= 1) {
+				const channel = this.amqplibChannnelMap[identifier].channel;
+				delete this.amqplibChannnelMap[identifier];
+				await channel.close();
+			} else {
+				this.amqplibChannnelMap[identifier].clientCount--;
+			}
+		} else {
+			console.log("Unexpected close channel to non-existent channel " + identifier);
 		}
 	}
 
