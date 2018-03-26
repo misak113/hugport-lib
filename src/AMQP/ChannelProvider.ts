@@ -340,6 +340,7 @@ export default class ChannelProvider {
 		} else {
 			debug('Create channel %s', identifier);
 			const amqplibChannel = await createChannel();
+			amqplibChannel.setMaxListeners(100);
 			if (typeof this.amqplibChannnelMap[identifier] !== 'undefined') {
 				// if more channels are created in same time then use the first created
 				debug('Close useless channel %s', identifier);
