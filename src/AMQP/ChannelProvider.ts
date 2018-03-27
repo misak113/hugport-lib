@@ -88,6 +88,7 @@ export default class ChannelProvider {
 							async (amqplibResponseMessage: AmqplibMessage) => {
 								if (amqplibResponseMessage.properties.correlationId === correlationId) {
 									amqplibResponseChannel.ack(amqplibResponseMessage);
+									const responseMessage = this.decodeMessageBuffer(amqplibResponseMessage.content);
 									try {
 										await amqplibResponseChannel.cancel(consumerTag);
 									} catch (error) {
@@ -97,7 +98,7 @@ export default class ChannelProvider {
 											error,
 										);
 									}
-									resolve(this.decodeMessageBuffer(amqplibResponseMessage.content));
+									resolve(responseMessage);
 								} else {
 									amqplibResponseChannel.nack(amqplibResponseMessage);
 								}
