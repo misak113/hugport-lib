@@ -44,7 +44,7 @@ function formatTransitionForPosix(timezone: string, dateMoment: moment.Moment) {
 	if (!isFinite(ts)) {
 		return "J365/25";
 	}
-	const transition = moment(ts).utcOffset(-zone.offset(ts - 1));
+	const transition = moment(ts).utcOffset(-zone.utcOffset(ts - 1));
 	// tslint:disable-next-line
 	const n = transition.date() / 7 | 0 + 1;
 	let s = transition.format('[M]M.[n].d').replace('n', n.toString());
