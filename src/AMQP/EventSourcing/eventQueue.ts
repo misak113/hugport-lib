@@ -15,6 +15,7 @@ const OPTIONS = {
 export async function enqueue(amqpConnection: IAMQPConnection, event: IEvent<IEventPayload>) {
 	await amqpConnection.queuePublisher.enqueueRepeatable(
 		event,
+		event.type,
 		getBasicEventRoutingKey(event.type),
 		EXCHANGE_NAME,
 		FAILED_EXCHANGE_NAME,
@@ -24,6 +25,7 @@ export async function enqueue(amqpConnection: IAMQPConnection, event: IEvent<IEv
 export async function enqueueForDevice(amqpConnection: IAMQPConnection, event: IEvent<IEventPayload>, deviceUid: string) {
 	await amqpConnection.queuePublisher.enqueueRepeatable(
 		event,
+		event.type,
 		getDeviceEventRoutingKey(event.type, deviceUid),
 		EXCHANGE_NAME,
 		FAILED_EXCHANGE_NAME,
@@ -101,6 +103,7 @@ export async function bindOne<TPayload extends IEventPayload>(
 	return await amqpConnection.queueSubscriber.subscribeRepeatable(
 		queueName,
 		onEvent,
+		eventType,
 		getBasicEventRoutingKey(eventType),
 		EXCHANGE_NAME,
 		FAILED_EXCHANGE_NAME,
@@ -124,6 +127,7 @@ export async function bindOneExpectingConfirmation<TPayload extends IEventPayloa
 	return await amqpConnection.queueSubscriber.subscribeExpectingConfirmationRepeatable(
 		queueName,
 		onEvent,
+		eventType,
 		getBasicEventRoutingKey(eventType),
 		EXCHANGE_NAME,
 		FAILED_EXCHANGE_NAME,
@@ -148,6 +152,7 @@ export async function bindOneForDeviceExpectingConfirmation<TPayload extends IEv
 	return await amqpConnection.queueSubscriber.subscribeExpectingConfirmationRepeatable(
 		queueName,
 		onEvent,
+		getDeviceNamespace(deviceUid),
 		getDeviceEventRoutingKey(eventType, deviceUid),
 		EXCHANGE_NAME,
 		FAILED_EXCHANGE_NAME,
@@ -171,6 +176,7 @@ export async function bindOneFailedForDeviceExpectingConfirmation<TPayload exten
 	return await amqpConnection.queueSubscriber.subscribeExpectingConfirmationRepeatable(
 		queueName,
 		onEvent,
+		getDeviceNamespace("*"),
 		getDeviceEventRoutingKey(eventType, "*"), // bind all devices
 		FAILED_EXCHANGE_NAME,
 		undefined,
@@ -188,8 +194,12 @@ export async function purgeOne(
 	consumerType: string,
 ) {
 	const queueName = getQueueName(consumerType, eventType);
-	const channel = await amqpConnection.channelProvider.getChannel(getBasicEventRoutingKey(eventType));
-	await channel.purge(queueName);
+	const channel = await amqpConnection.channelProvider.getChannel(eventType, getBasicEventRoutingKey(eventType));
+	try {
+		await channel.purge(queueName);
+	} finally {
+		await channel.close();
+	}
 }
 
 export async function deleteMore(
@@ -199,16 +209,35 @@ export async function deleteMore(
 ) {
 	for (let eventType of eventTypes) {
 		const queueName = getQueueName(consumerType, eventType);
-		const channel = await amqpConnection.channelProvider.getChannel(getBasicEventRoutingKey(eventType));
-		await channel.delete(queueName);
+		const channel = await amqpConnection.channelProvider.getChannel(eventType, getBasicEventRoutingKey(eventType));
+		try {
+			await channel.delete(queueName);
+		} finally {
+			await channel.close();
+		}
 
 		const deviceQueueName = getDeviceQueueName(consumerType, eventType);
-		const deviceChannel = await amqpConnection.channelProvider.getChannel(getDeviceEventRoutingKey(eventType, '*'));
-		await deviceChannel.delete(deviceQueueName);
+		const deviceChannel = await amqpConnection.channelProvider.getChannel(
+			getDeviceNamespace("*"),
+			eventType,
+			getDeviceEventRoutingKey(eventType, '*'),
+		);
+		try {
+			await deviceChannel.delete(deviceQueueName);
+		} finally {
+			await deviceChannel.close();
+		}
 
 		const failedDeviceQueueName = getFailedDeviceQueueName(consumerType, eventType);
-		const failedDeviceChannel = await amqpConnection.channelProvider.getChannel(getDeviceEventRoutingKey(eventType, '*'));
-		await failedDeviceChannel.delete(failedDeviceQueueName);
+		const failedDeviceChannel = await amqpConnection.channelProvider.getChannel(
+			getDeviceNamespace("*"),
+			getDeviceEventRoutingKey(eventType, '*')
+		);
+		try {
+			await failedDeviceChannel.delete(failedDeviceQueueName);
+		} finally {
+			await failedDeviceChannel.close();
+		}
 	}
 }
 
@@ -241,4 +270,8 @@ function getBasicEventRoutingKey(eventType: string) {
 
 function getDeviceEventRoutingKey(eventType: string, deviceUid: string) {
 	return "device." + escapeEventTypeForRoutingKey(eventType) + "." + deviceUid;
+}
+
+function getDeviceNamespace(deviceUid: string) {
+	return "device_" + deviceUid;
 }

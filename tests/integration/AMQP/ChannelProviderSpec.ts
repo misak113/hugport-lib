@@ -46,7 +46,7 @@ describe('AMQP.ChannelProvider', function () {
 			await rawTestChannel.bindQueue('queue3', 'exchange1', 'route2');
 			await rawTestChannel.bindQueue('queue4', 'exchange2', 'route1');
 
-			const channelInstance = await this.channelProvider.getChannel('route1', 'exchange1');
+			const channelInstance = await this.channelProvider.getChannel('test', 'route1', 'exchange1');
 			await channelInstance.send({ a: 1, b: 2 });
 			await wait(500);
 
@@ -61,6 +61,8 @@ describe('AMQP.ChannelProvider', function () {
 			should(message3).be.false();
 			should(message4).be.false();
 			should(message5).be.false();
+
+			await channelInstance.close();
 		});
 	});
 
@@ -102,16 +104,17 @@ describe('AMQP.ChannelProvider', function () {
 			await rawTestChannel.consume('queue3', createConsumeAndRespondCallback(rawTestChannel, { response: 3 }));
 			await rawTestChannel.consume('queue4', createConsumeAndRespondCallback(rawTestChannel, { response: 4 }));
 
-			const channelInstance = await this.channelProvider.getChannel('route1', 'exchange1');
+			const channelInstance = await this.channelProvider.getChannel('test', 'route1', 'exchange1');
 			const response = await channelInstance.sendExpectingResponse({ c: 3, d: 4 });
 			response.should.deepEqual({ response: 1 });
+			await channelInstance.close();
 		});
 	});
 
 	describe('consume', function () {
 
 		it('should consume message from a queue bound to a specific exchange and routing key', async function () {
-			const channelInstance = await this.channelProvider.getChannel('route1', 'exchange1');
+			const channelInstance = await this.channelProvider.getChannel('test', 'route1', 'exchange1');
 			const consumeCallback = async (queueName: string, result: object, done: () => void) => await channelInstance.consume(
 				queueName,
 				async (message: any, ack: () => void) => {
@@ -141,6 +144,7 @@ describe('AMQP.ChannelProvider', function () {
 			rawTestChannel.publish('exchange1', 'route1', new Buffer(JSON.stringify({ message: 1 })));
 
 			await waitUntil(async () => done1 && done2, 100);
+			await channelInstance.close();
 		});
 
 		it(
@@ -160,7 +164,7 @@ describe('AMQP.ChannelProvider', function () {
 				await rawTestChannel.assertQueue('replyQueue3', { durable: false, autoDelete: true });
 				await rawTestChannel.assertQueue('replyQueue4', { durable: false, autoDelete: true });
 
-				const channelInstance = await this.channelProvider.getChannel('route1', 'exchange1');
+				const channelInstance = await this.channelProvider.getChannel('test', 'route1', 'exchange1');
 				await channelInstance.consume(
 					'queue1',
 					async (message: any, ack: () => void) => {
@@ -216,6 +220,8 @@ describe('AMQP.ChannelProvider', function () {
 
 				message1!.content.toString().should.deepEqual(JSON.stringify({ response: { message: 1 } }));
 				message2!.content.toString().should.deepEqual(JSON.stringify({ response: { message: 2 } }));
+
+				await channelInstance.close();
 			},
 		);
 	});
