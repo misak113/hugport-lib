@@ -1,5 +1,6 @@
 import * as should from 'should';
 import * as sinon from 'sinon';
+import { Channel } from 'amqplib';
 import {
 	enqueue,
 	process,
@@ -26,10 +27,11 @@ describe('AMQP.CQRS.commandQueue', function () {
 
 	describe('enqueue', function () {
 
-		it('should publish command to default exchange and routing key commands', async function () {
-			const channel = await this.amqplibConnection.createChannel();
+		it('should publish command to commands exchange and routing key commands', async function () {
+			const channel: Channel = await this.amqplibConnection.createChannel();
 			await channel.deleteQueue('commands');
-			await channel.assertQueue('commands');
+			await channel.assertExchange('commands', 'topic');
+			await fetchNext(amqpConnection);
 
 			let resultMessage: any;
 			const { consumerTag } = await channel.consume('commands', (message: any) => {
@@ -63,9 +65,10 @@ describe('AMQP.CQRS.commandQueue', function () {
 	describe('process', function () {
 
 		it('should enqueue command and receive a correct response', async function () {
-			const channel = await this.amqplibConnection.createChannel();
+			const channel: Channel = await this.amqplibConnection.createChannel();
 			await channel.deleteQueue('commands');
-			await channel.assertQueue('commands');
+			await channel.assertExchange('commands', 'topic');
+			await fetchNext(amqpConnection);
 
 			const { consumerTag } = await channel.consume('commands', (message: any) => {
 				channel.ack(message);
@@ -99,13 +102,10 @@ describe('AMQP.CQRS.commandQueue', function () {
 	describe('bindAll', function () {
 
 		it('should call a given callback everytime with an enqueued command', async function () {
-			const channel = await this.amqplibConnection.createChannel();
+			const channel: Channel = await this.amqplibConnection.createChannel();
 			await channel.deleteQueue('commands');
-			await channel.assertQueue('commands', {
-				deadLetterExchange: '',
-				deadLetterRoutingKey: '__rejected.commands',
-				maxPriority: 10,
-			});
+			await channel.assertExchange('commands', 'topic');
+			await fetchNext(amqpConnection);
 
 			const bindCallback = sinon.spy();
 			const cancelBindAll = await bindAll(amqpConnection, bindCallback);
@@ -139,13 +139,10 @@ describe('AMQP.CQRS.commandQueue', function () {
 	describe('fetchNext', function () {
 
 		it('should fetch next command', async function () {
-			const channel = await this.amqplibConnection.createChannel();
+			const channel: Channel = await this.amqplibConnection.createChannel();
 			await channel.deleteQueue('commands');
-			await channel.assertQueue('commands', {
-				deadLetterExchange: '',
-				deadLetterRoutingKey: '__rejected.commands',
-				maxPriority: 10,
-			});
+			await channel.assertExchange('commands', 'topic');
+			await fetchNext(amqpConnection);
 
 			const command = {
 				id: null,
@@ -173,13 +170,10 @@ describe('AMQP.CQRS.commandQueue', function () {
 	describe('purgeAll', function () {
 
 		it('should purge all commands from the queue', async function () {
-			const channel = await this.amqplibConnection.createChannel();
+			const channel: Channel = await this.amqplibConnection.createChannel();
 			await channel.deleteQueue('commands');
-			await channel.assertQueue('commands', {
-				deadLetterExchange: '',
-				deadLetterRoutingKey: '__rejected.commands',
-				maxPriority: 10,
-			});
+			await channel.assertExchange('commands', 'topic');
+			await fetchNext(amqpConnection);
 
 			const createCommand = (payload: object) => ({
 				id: null,
@@ -205,7 +199,7 @@ describe('AMQP.CQRS.commandQueue', function () {
 
 			const nextCommand = await channel.get('commands');
 			if (nextCommand) {
-				console.log(JSON.parse(nextCommand.content.toString()));
+				console.log(JSON.parse((nextCommand as any).content.toString()));
 			}
 			should(nextCommand).be.false();
 		});
@@ -214,13 +208,10 @@ describe('AMQP.CQRS.commandQueue', function () {
 	describe('deleteAll', function () {
 
 		it('should delete all commands queues', async function () {
-			const channel = await this.amqplibConnection.createChannel();
+			const channel: Channel = await this.amqplibConnection.createChannel();
 			await channel.deleteQueue('commands');
-			await channel.assertQueue('commands', {
-				deadLetterExchange: '',
-				deadLetterRoutingKey: '__rejected.commands',
-				maxPriority: 10,
-			});
+			await channel.assertExchange('commands', 'topic');
+			await fetchNext(amqpConnection);
 
 			const createCommand = (payload: object) => ({
 				id: null,
@@ -246,7 +237,7 @@ describe('AMQP.CQRS.commandQueue', function () {
 
 			const nextCommand = await channel.get('commands');
 			if (nextCommand) {
-				console.log(JSON.parse(nextCommand.content.toString()));
+				console.log(JSON.parse((nextCommand as any).content.toString()));
 			}
 			should(nextCommand).be.false();
 		});
