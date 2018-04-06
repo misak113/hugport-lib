@@ -4,6 +4,7 @@ import ICommand, { ICommandPayload } from './ICommand';
 import ICommandError from './ICommandError';
 
 export const QUEUE_NAME = 'commands';
+export const AUTO_SNAPSHOTS_QUEUE_NAME = 'auto_snapshots';
 const OPTIONS = {
 	persistent: true,
 	confirmable: true,
@@ -62,7 +63,7 @@ export async function process<TType extends string, TCommandError extends IComma
 		command,
 		QUEUE_NAME,
 		QUEUE_NAME,
-		undefined,
+		QUEUE_NAME,
 		undefined,
 		OPTIONS,
 		messageOptions,
@@ -87,7 +88,31 @@ export async function bindAll<TCommandType extends string>(
 		},
 		QUEUE_NAME,
 		QUEUE_NAME,
+		QUEUE_NAME,
 		undefined,
+		OPTIONS,
+	);
+}
+
+export async function bindAutoSnapshots<TCommandType extends string>(
+	amqpConnection: IAMQPConnection,
+	onCommand: (command: ICommand<TCommandType>) => Promise<void>,
+) {
+	return await amqpConnection.queueSubscriber.subscribeExpectingConfirmationRepeatable(
+		AUTO_SNAPSHOTS_QUEUE_NAME,
+		async (command: ICommand<TCommandType>, ack: () => void, nack: () => void) => {
+			try {
+				const response = await onCommand(command);
+				ack();
+				return response;
+			} catch (error) {
+				nack();
+				throw error;
+			}
+		},
+		AUTO_SNAPSHOTS_QUEUE_NAME,
+		QUEUE_NAME,
+		QUEUE_NAME,
 		undefined,
 		OPTIONS,
 	);
@@ -100,7 +125,7 @@ export async function fetchNext<TCommandType extends string, TPayload extends IC
 		amqpConnection,
 		QUEUE_NAME,
 		QUEUE_NAME,
-		undefined,
+		QUEUE_NAME,
 		undefined,
 		{ maxPriority: OPTIONS.maxPriority }
 		);
