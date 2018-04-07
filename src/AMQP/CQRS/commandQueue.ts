@@ -51,7 +51,7 @@ export async function enqueue<TCommandType extends string>(
 	command: ICommand<TCommandType>,
 	messageOptions: IMessageOptions = { priority: 5 },
 ) {
-	await amqpConnection.queuePublisher.enqueueRepeatable(command, QUEUE_NAME, QUEUE_NAME, undefined, undefined, OPTIONS, messageOptions);
+	await amqpConnection.queuePublisher.enqueueRepeatable(command, QUEUE_NAME, QUEUE_NAME, QUEUE_NAME, undefined, OPTIONS, messageOptions);
 }
 
 export async function process<TType extends string, TCommandError extends ICommandError<string>>(
@@ -131,19 +131,34 @@ export async function fetchNext<TCommandType extends string, TPayload extends IC
 		);
 }
 
+export async function fetchNextAutoSnapshot<TCommandType extends string, TPayload extends ICommandPayload<TCommandType>>(
+	amqpConnection: IAMQPConnection,
+): Promise<ICommand<TCommandType, TPayload> | null> {
+	return await fetchNextMessage<ICommand<TCommandType, TPayload> | null>(
+		amqpConnection,
+		AUTO_SNAPSHOTS_QUEUE_NAME,
+		QUEUE_NAME,
+		QUEUE_NAME,
+		undefined,
+		{ maxPriority: OPTIONS.maxPriority }
+		);
+}
+
 export async function purgeAll(amqpConnection: IAMQPConnection) {
-	const channel = await amqpConnection.channelProvider.getChannel(QUEUE_NAME, QUEUE_NAME);
+	const channel = await amqpConnection.channelProvider.getChannel(QUEUE_NAME, QUEUE_NAME, QUEUE_NAME);
 	try {
 		await channel.purge(QUEUE_NAME);
+		await channel.purge(AUTO_SNAPSHOTS_QUEUE_NAME);
 	} finally {
 		await channel.close();
 	}
 }
 
 export async function deleteAll(amqpConnection: IAMQPConnection) {
-	const channel = await amqpConnection.channelProvider.getChannel(QUEUE_NAME, QUEUE_NAME);
+	const channel = await amqpConnection.channelProvider.getChannel(QUEUE_NAME, QUEUE_NAME, QUEUE_NAME);
 	try {
 		await channel.delete(QUEUE_NAME);
+		await channel.delete(AUTO_SNAPSHOTS_QUEUE_NAME);
 	} finally {
 		await channel.close();
 	}
@@ -152,4 +167,5 @@ export async function deleteAll(amqpConnection: IAMQPConnection) {
 export async function prepareAll(amqpConnection: IAMQPConnection) {
 	// Hack to create event queue for exchange
 	await fetchNext(amqpConnection);
+	await fetchNextAutoSnapshot(amqpConnection);
 }
