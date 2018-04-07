@@ -91,6 +91,8 @@ export async function bindAll<TCommandType extends string>(
 		QUEUE_NAME,
 		undefined,
 		OPTIONS,
+		undefined,
+		true,
 	);
 }
 
@@ -102,9 +104,8 @@ export async function bindAutoSnapshots<TCommandType extends string>(
 		AUTO_SNAPSHOTS_QUEUE_NAME,
 		async (command: ICommand<TCommandType>, ack: () => void, nack: () => void) => {
 			try {
-				const response = await onCommand(command);
+				await onCommand(command);
 				ack();
-				return response;
 			} catch (error) {
 				nack();
 				throw error;

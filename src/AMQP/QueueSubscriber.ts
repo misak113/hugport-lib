@@ -66,7 +66,16 @@ export default class QueuePublisher {
 				async () => {
 					// TODO it does not cancel consumption during repeating
 					cancelConsumption = await this.repeateSubscription(
-						queueName, onMessage, namespace, options, consumeOptions, false, routingKey, exchangeName, alternateExchangeName,
+						queueName,
+						onMessage,
+						namespace,
+						options,
+						consumeOptions,
+						false,
+						routingKey,
+						exchangeName,
+						alternateExchangeName,
+						false,
 					);
 				},
 			);
@@ -75,7 +84,16 @@ export default class QueuePublisher {
 		} catch (error) {
 			debug('Error during subscribe repeatable: %s', queueName, exchangeName, alternateExchangeName, routingKey, error);
 			return await this.repeateSubscription(
-				queueName, onMessage, namespace, options, consumeOptions, false, routingKey, exchangeName, alternateExchangeName,
+				queueName,
+				onMessage,
+				namespace,
+				options,
+				consumeOptions,
+				false,
+				routingKey,
+				exchangeName,
+				alternateExchangeName,
+				false,
 			);
 		}
 	}
@@ -89,10 +107,11 @@ export default class QueuePublisher {
 		alternateExchangeName?: string,
 		options: IQueueOptions = {},
 		consumeOptions: IConsumeOptions = {},
-		onEnded?: () => void
+		onEnded?: () => void,
+		respond: boolean = false,
 	): Promise<ICancelConsumption> {
 		const channel = await this.channelProvider.getChannel(namespace, routingKey, exchangeName, options, alternateExchangeName);
-		const cancelConsumption = await channel.consume(queueName, onMessage, true, consumeOptions, onEnded);
+		const cancelConsumption = await channel.consume(queueName, onMessage, respond, consumeOptions, onEnded);
 		debug('Messages subscribed expecting confirmation: %s', queueName, routingKey, exchangeName);
 		return async () => {
 			try {
@@ -112,6 +131,7 @@ export default class QueuePublisher {
 		alternateExchangeName?: string,
 		options: IQueueOptions = {},
 		consumeOptions: IConsumeOptions = {},
+		respond: boolean = false,
 	): Promise<ICancelConsumption> {
 		try {
 			let cancelConsumption = await this.subscribeExpectingConfirmation(
@@ -126,16 +146,35 @@ export default class QueuePublisher {
 				async () => {
 					// TODO it does not cancel consumption during repeating
 					cancelConsumption = await this.repeateSubscription(
-						queueName, onMessage, namespace, options, consumeOptions, true, routingKey, exchangeName, alternateExchangeName,
+						queueName,
+						onMessage,
+						namespace,
+						options,
+						consumeOptions,
+						true,
+						routingKey,
+						exchangeName,
+						alternateExchangeName,
+						respond,
 					);
 				},
+				respond,
 			);
 			debug('Messages subscribed expecting confirmation: %s', queueName, routingKey, exchangeName, alternateExchangeName);
 			return () => cancelConsumption();
 		} catch (error) {
 			debug('Error during subscribe expecting confirmation repeatable: %s', queueName, routingKey, exchangeName, alternateExchangeName, error);
 			return await this.repeateSubscription(
-				queueName, onMessage, namespace, options, consumeOptions, true, routingKey, exchangeName, alternateExchangeName,
+				queueName,
+				onMessage,
+				namespace,
+				options,
+				consumeOptions,
+				true,
+				routingKey,
+				exchangeName,
+				alternateExchangeName,
+				respond,
 			);
 		}
 	}
@@ -148,12 +187,23 @@ export default class QueuePublisher {
 		consumeOptions: IConsumeOptions,
 		confirmationWaiting: boolean,
 		routingKey: string,
-		exchangeName?: string,
-		alternateExchangeName?: string,
+		exchangeName: string | undefined,
+		alternateExchangeName: string | undefined,
+		respond: boolean,
 	) {
 		return new Promise((resolve: (cancelConsumption: ICancelConsumption) => void) => {
 			this.unsubscribedMessageStorage.push({
-				queueName, onMessage, namespace, routingKey, exchangeName, alternateExchangeName, options, consumeOptions, resolve, confirmationWaiting,
+				queueName,
+				onMessage,
+				namespace,
+				routingKey,
+				exchangeName,
+				alternateExchangeName,
+				options,
+				consumeOptions,
+				resolve,
+				confirmationWaiting,
+				respond,
 			});
 			this.tryResubscribeAfterTimeout();
 		});
@@ -164,8 +214,17 @@ export default class QueuePublisher {
 			const unqueuedMessage = this.unsubscribedMessageStorage.shift();
 			if (unqueuedMessage) {
 				const {
-					queueName, onMessage, namespace, routingKey, exchangeName, alternateExchangeName,
-					options, consumeOptions, resolve, confirmationWaiting,
+					queueName,
+					onMessage,
+					namespace,
+					routingKey,
+					exchangeName,
+					alternateExchangeName,
+					options,
+					consumeOptions,
+					resolve,
+					confirmationWaiting,
+					respond,
 				} = unqueuedMessage;
 				try {
 					let cancelConsumption: ICancelConsumption;
@@ -173,7 +232,16 @@ export default class QueuePublisher {
 						cancelConsumption = await this.subscribe(
 							queueName, onMessage, namespace, routingKey, exchangeName, alternateExchangeName, options, consumeOptions, async () => {
 								await this.repeateSubscription(
-									queueName, onMessage, namespace, options, consumeOptions, confirmationWaiting, routingKey, exchangeName, alternateExchangeName,
+									queueName,
+									onMessage,
+									namespace,
+									options,
+									consumeOptions,
+									confirmationWaiting,
+									routingKey,
+									exchangeName,
+									alternateExchangeName,
+									respond,
 								);
 							},
 						);
@@ -189,9 +257,19 @@ export default class QueuePublisher {
 							consumeOptions,
 							async () => {
 								await this.repeateSubscription(
-									queueName, onMessage, namespace, options, consumeOptions, confirmationWaiting, routingKey, exchangeName, alternateExchangeName,
+									queueName,
+									onMessage,
+									namespace,
+									options,
+									consumeOptions,
+									confirmationWaiting,
+									routingKey,
+									exchangeName,
+									alternateExchangeName,
+									respond,
 								);
 							},
+							respond,
 						);
 					}
 					resolve(cancelConsumption);

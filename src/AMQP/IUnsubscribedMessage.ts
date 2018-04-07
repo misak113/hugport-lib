@@ -16,4 +16,5 @@ interface IUnsubscribedMessage {
 	consumeOptions: IConsumeOptions;
 	resolve: (cancelConsumption: ICancelConsumption) => void;
 	confirmationWaiting: boolean;
+	respond: boolean;
 }

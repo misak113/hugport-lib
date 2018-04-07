@@ -293,7 +293,7 @@ describe('AMQP.EventSourcing.eventQueue', function () {
 
 	describe('bindOneExpectingConfirmation', function () {
 
-		it('should call given callback on specified event enqueued and send response message, returned by the callback', async function () {
+		it('should call given callback on specified event enqueued', async function () {
 			const channel = await this.amqplibConnection.createChannel();
 			await channel.deleteExchange('events');
 			await channel.deleteExchange('events_failed');
@@ -321,9 +321,6 @@ describe('AMQP.EventSourcing.eventQueue', function () {
 				{ replyTo: 'replyQueue1', correlationId: 'test1' },
 			);
 			await waitUntil(async () => callback1.calledOnce);
-			const response1 = await channel.get('replyQueue1');
-			should(response1).not.be.false();
-			response1!.properties.correlationId.should.equal('test1');
 
 			channel.publish(
 				'events',
@@ -332,9 +329,6 @@ describe('AMQP.EventSourcing.eventQueue', function () {
 				{ replyTo: 'replyQueue2', correlationId: 'test2' },
 			);
 			await waitUntil(async () => callback2.calledOnce);
-			const response2 = await channel.get('replyQueue2');
-			should(response2).not.be.false();
-			response2!.properties.correlationId.should.equal('test2');
 
 			channel.publish(
 				'events',
@@ -343,9 +337,6 @@ describe('AMQP.EventSourcing.eventQueue', function () {
 				{ replyTo: 'replyQueue3', correlationId: 'test3' },
 			);
 			await waitUntil(async () => callback3.calledOnce);
-			const response3 = await channel.get('replyQueue3');
-			should(response3).not.be.false();
-			response3!.properties.correlationId.should.equal('test3');
 
 			await cancel1();
 			await cancel2();
@@ -355,7 +346,7 @@ describe('AMQP.EventSourcing.eventQueue', function () {
 
 	describe("bindOneForDeviceExpectingConfirmation", function () {
 
-		it("should call given callback on specified event enqueued and send response message, returned by the callback", async function () {
+		it("should call given callback on specified event enqueued", async function () {
 			const channel = await this.amqplibConnection.createChannel();
 			await channel.deleteExchange("events");
 			await channel.deleteExchange("events_failed");
@@ -393,9 +384,6 @@ describe('AMQP.EventSourcing.eventQueue', function () {
 				{ replyTo: "replyQueue11", correlationId: "test11" },
 			);
 			await waitUntil(async () => callback11.calledOnce);
-			const response11 = await channel.get("replyQueue11");
-			should(response11).not.be.false();
-			response11!.properties.correlationId.should.equal("test11");
 
 			channel.publish(
 				"events",
@@ -404,9 +392,6 @@ describe('AMQP.EventSourcing.eventQueue', function () {
 				{ replyTo: "replyQueue12", correlationId: "test12" },
 			);
 			await waitUntil(async () => callback12.calledOnce);
-			const response12 = await channel.get("replyQueue12");
-			should(response12).not.be.false();
-			response12!.properties.correlationId.should.equal("test12");
 
 			channel.publish(
 				"events",
@@ -415,9 +400,6 @@ describe('AMQP.EventSourcing.eventQueue', function () {
 				{ replyTo: "replyQueue13", correlationId: "test13" },
 			);
 			await waitUntil(async () => callback13.calledOnce);
-			const response13 = await channel.get("replyQueue13");
-			should(response13).not.be.false();
-			response13!.properties.correlationId.should.equal("test13");
 
 			channel.publish(
 				"events",
@@ -426,9 +408,6 @@ describe('AMQP.EventSourcing.eventQueue', function () {
 				{ replyTo: "replyQueue21", correlationId: "test21" },
 			);
 			await waitUntil(async () => callback21.calledOnce);
-			const response21 = await channel.get("replyQueue21");
-			should(response21).not.be.false();
-			response21!.properties.correlationId.should.equal("test21");
 
 			channel.publish(
 				"events",
@@ -437,9 +416,6 @@ describe('AMQP.EventSourcing.eventQueue', function () {
 				{ replyTo: "replyQueue22", correlationId: "test22" },
 			);
 			await waitUntil(async () => callback22.calledOnce);
-			const response22 = await channel.get("replyQueue22");
-			should(response22).not.be.false();
-			response22!.properties.correlationId.should.equal("test22");
 
 			channel.publish(
 				"events",
@@ -448,9 +424,6 @@ describe('AMQP.EventSourcing.eventQueue', function () {
 				{ replyTo: "replyQueue23", correlationId: "test23" },
 			);
 			await waitUntil(async () => callback23.calledOnce);
-			const response23 = await channel.get("replyQueue23");
-			should(response23).not.be.false();
-			response23!.properties.correlationId.should.equal("test23");
 
 			await cancel11();
 			await cancel12();
@@ -463,7 +436,7 @@ describe('AMQP.EventSourcing.eventQueue', function () {
 
 	describe("bindOneFailedForDeviceExpectingConfirmation", function () {
 
-		it("should call given callback on specified event enqueued and send response message, returned by the callback", async function () {
+		it("should call given callback on specified event enqueued", async function () {
 			const channel = await this.amqplibConnection.createChannel();
 			await channel.deleteExchange("events");
 			await channel.deleteExchange("events_failed");
@@ -487,9 +460,6 @@ describe('AMQP.EventSourcing.eventQueue', function () {
 				{ replyTo: "replyQueue1", correlationId: "test1" },
 			);
 			await waitUntil(async () => callback1.calledOnce);
-			const response1 = await channel.get("replyQueue1");
-			should(response1).not.be.false();
-			response1!.properties.correlationId.should.equal("test1");
 
 			channel.publish(
 				"events",
@@ -498,9 +468,6 @@ describe('AMQP.EventSourcing.eventQueue', function () {
 				{ replyTo: "replyQueue2", correlationId: "test2" },
 			);
 			await waitUntil(async () => callback2.calledOnce);
-			const response2 = await channel.get("replyQueue2");
-			should(response2).not.be.false();
-			response2!.properties.correlationId.should.equal("test2");
 
 			await cancel1();
 			await cancel2();
