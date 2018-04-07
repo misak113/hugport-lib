@@ -8,6 +8,7 @@ import {
 	fetchNext,
 	purgeAll,
 	deleteAll,
+	fetchNextAutoSnapshot,
 } from '../../../../src/AMQP/CQRS/commandQueue';
 import waitUntil from '../../../../src/DateTime/waitUntil';
 import wait from '../../../../src/Timer/wait';
@@ -172,8 +173,10 @@ describe('AMQP.CQRS.commandQueue', function () {
 		it('should purge all commands from the queue', async function () {
 			const channel: Channel = await this.amqplibConnection.createChannel();
 			await channel.deleteQueue('commands');
+			await channel.deleteQueue('auto_snapshots');
 			await channel.assertExchange('commands', 'topic');
 			await fetchNext(amqpConnection);
+			await fetchNextAutoSnapshot(amqpConnection);
 
 			const createCommand = (payload: object) => ({
 				id: null,
@@ -210,8 +213,10 @@ describe('AMQP.CQRS.commandQueue', function () {
 		it('should delete all commands queues', async function () {
 			const channel: Channel = await this.amqplibConnection.createChannel();
 			await channel.deleteQueue('commands');
+			await channel.deleteQueue('auto_snapshots');
 			await channel.assertExchange('commands', 'topic');
 			await fetchNext(amqpConnection);
+			await fetchNextAutoSnapshot(amqpConnection);
 
 			const createCommand = (payload: object) => ({
 				id: null,
