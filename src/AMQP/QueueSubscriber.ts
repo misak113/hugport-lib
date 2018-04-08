@@ -54,6 +54,7 @@ export default class QueuePublisher {
 		consumeOptions: IConsumeOptions = {},
 	): Promise<ICancelConsumption> {
 		try {
+			let computionCanceled = false;
 			let cancelConsumption = await this.subscribe(
 				queueName,
 				onMessage,
@@ -64,23 +65,27 @@ export default class QueuePublisher {
 				options,
 				consumeOptions,
 				async () => {
-					// TODO it does not cancel consumption during repeating
-					cancelConsumption = await this.repeateSubscription(
-						queueName,
-						onMessage,
-						namespace,
-						options,
-						consumeOptions,
-						false,
-						routingKey,
-						exchangeName,
-						alternateExchangeName,
-						false,
-					);
+					if (!computionCanceled) {
+						cancelConsumption = await this.repeateSubscription(
+							queueName,
+							onMessage,
+							namespace,
+							options,
+							consumeOptions,
+							false,
+							routingKey,
+							exchangeName,
+							alternateExchangeName,
+							false,
+						);
+					}
 				},
 			);
 			debug('Messages subscribed: %s', queueName, routingKey, exchangeName, alternateExchangeName);
-			return () => cancelConsumption();
+			return async () => {
+				computionCanceled = true;
+				await cancelConsumption();
+			};
 		} catch (error) {
 			debug('Error during subscribe repeatable: %s', queueName, exchangeName, alternateExchangeName, routingKey, error);
 			return await this.repeateSubscription(
@@ -134,6 +139,7 @@ export default class QueuePublisher {
 		respond: boolean = false,
 	): Promise<ICancelConsumption> {
 		try {
+			let computionCanceled = false;
 			let cancelConsumption = await this.subscribeExpectingConfirmation(
 				queueName,
 				onMessage,
@@ -144,24 +150,28 @@ export default class QueuePublisher {
 				options,
 				consumeOptions,
 				async () => {
-					// TODO it does not cancel consumption during repeating
-					cancelConsumption = await this.repeateSubscription(
-						queueName,
-						onMessage,
-						namespace,
-						options,
-						consumeOptions,
-						true,
-						routingKey,
-						exchangeName,
-						alternateExchangeName,
-						respond,
-					);
+					if (!computionCanceled) {
+						cancelConsumption = await this.repeateSubscription(
+							queueName,
+							onMessage,
+							namespace,
+							options,
+							consumeOptions,
+							true,
+							routingKey,
+							exchangeName,
+							alternateExchangeName,
+							respond,
+						);
+					}
 				},
 				respond,
 			);
 			debug('Messages subscribed expecting confirmation: %s', queueName, routingKey, exchangeName, alternateExchangeName);
-			return () => cancelConsumption();
+			return async () => {
+				computionCanceled = true;
+				await cancelConsumption();
+			};
 		} catch (error) {
 			debug('Error during subscribe expecting confirmation repeatable: %s', queueName, routingKey, exchangeName, alternateExchangeName, error);
 			return await this.repeateSubscription(
