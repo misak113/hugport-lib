@@ -11,3 +11,7 @@ export function now(timezoneOffsetHours?: number) {
 export function getCurrentTimezone() {
 	return - (new Date().getTimezoneOffset() / 60);
 }
+
+export function getCurrentTimezoneOffset() {
+	return new Date().getTimezoneOffset();
+}
